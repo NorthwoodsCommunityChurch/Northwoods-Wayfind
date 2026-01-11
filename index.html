@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Signage - Northwoods Community Church</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Northwoods Brand Colors */
+            --blue-primary: #004C97;      /* Pantone 2945 - Primary Blue */
+            --blue-dark: #002855;         /* Pantone 295 - Dark Blue */
+            --blue-light: #009CDE;        /* Pantone 292 - Light Blue */
+            --blue-tint-72: rgba(0, 156, 222, 0.72);  /* Pantone 292 72% */
+            --blue-tint-38: rgba(0, 156, 222, 0.38);  /* Pantone 292 38% */
+            --blue-tint-18: rgba(0, 156, 222, 0.18);  /* Pantone 292 18% */
+            --gold: #F1BE48;              /* Pantone 142 - Gold */
+            --orange: #FF6900;            /* Pantone 1505 - Orange */
+            --green: #86AD3F;             /* Pantone 4212 - Green */
+            --black: #2D2926;             /* Brand Black */
+
+            /* Applied Colors */
+            --primary-color: #004C97;
+            --primary-light: #009CDE;
+            --primary-dark: #002855;
+            --background-dark: #002855;
+            --background-card: #003d6b;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --accent-gradient: linear-gradient(135deg, #004C97 0%, #009CDE 100%);
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--blue-tint-38);
+            margin-bottom: 2rem;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: contain;
+        }
+
+        .church-name {
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .tagline {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .datetime-section {
+            text-align: right;
+        }
+
+        .current-time {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        .current-date {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 2rem;
+            overflow: hidden;
+        }
+
+        /* Slide View (single event spotlight) */
+        .slide-view {
+            flex: 2;
+            background: var(--background-card);
+            border-radius: 24px;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+
+        .slide-view.has-background {
+            background-size: cover;
+            background-position: center;
+        }
+
+        .slide-view.has-background::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(12, 24, 33, 0.7);
+            z-index: 1;
+        }
+
+        .slide-view .slide-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-evenly;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            padding: 2rem;
+            transition: opacity 0.4s ease;
+        }
+
+        .slide-label {
+            display: inline-block;
+            background: var(--accent-gradient);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            height: 2.5rem;
+            line-height: 1.5rem;
+        }
+
+        .slide-label.happening-now {
+            background: var(--accent-gradient);
+        }
+
+        .slide-label.upcoming {
+            background: var(--blue-tint-18);
+            color: var(--text-secondary);
+        }
+
+        .slide-title {
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            max-width: 85%;
+            min-height: 5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .slide-time {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            font-size: clamp(1.5rem, 3vw, 2.25rem);
+            height: 3rem;
+        }
+
+        .slide-time-icon {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            color: var(--primary-light);
+        }
+
+        .slide-time-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .slide-location {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 85%;
+            min-height: 4rem;
+            background: var(--blue-tint-18);
+            border: 1px solid var(--blue-tint-38);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .slide-location-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-primary);
+            font-weight: 600;
+            background: var(--blue-tint-38);
+            padding: 0.35rem 1rem;
+            width: 100%;
+            text-align: center;
+        }
+
+        .slide-location-box {
+            padding: 0.75rem 1.5rem;
+            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            color: var(--text-primary);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        .slide-description {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-width: 600px;
+            min-height: 2rem;
+        }
+
+        /* Welcome Slide Styles */
+        .welcome-slide {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        .welcome-slide .welcome-title {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-slide .welcome-subtitle {
+            font-size: 1.75rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+        }
+
+        .welcome-slide .welcome-time {
+            font-size: 6rem;
+            font-weight: 200;
+            color: var(--text-primary);
+        }
+
+        .welcome-slide .welcome-date {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Upcoming Events Sidebar */
+        .upcoming-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 350px;
+            overflow: hidden;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
+        }
+
+        .events-list-wrapper {
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: transform 0.5s ease;
+        }
+
+        .event-card {
+            background: var(--background-card);
+            border-radius: 16px;
+            padding: 1rem;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+            flex-shrink: 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-card.active {
+            background: linear-gradient(135deg, var(--blue-tint-38) 0%, var(--background-card) 100%);
+            border-left-color: var(--primary-light);
+            border-left-width: 6px;
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+        }
+
+        .event-card .card-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform-origin: left;
+            transform: scaleX(0);
+            transition: transform 0.1s linear;
+        }
+
+        .event-card.announcement {
+            border-left-color: var(--gold);
+        }
+
+        .event-card.announcement.active {
+            background: linear-gradient(135deg, rgba(241, 190, 72, 0.3) 0%, var(--background-card) 100%);
+        }
+
+        .event-card.info {
+            border-left-color: var(--primary-color);
+        }
+
+        .event-card.info.active {
+            background: linear-gradient(135deg, var(--blue-tint-38) 0%, var(--background-card) 100%);
+            border-left-color: var(--primary-light);
+        }
+
+        .events-divider {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 0;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .events-divider::before,
+        .events-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--blue-tint-38);
+        }
+
+        .event-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .event-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.15rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .event-time {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .event-location {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--blue-tint-18);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .upcoming-section {
+                min-width: unset;
+            }
+
+            .events-list {
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+            }
+
+            .event-card {
+                flex: 0 0 280px;
+                min-width: 280px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .slide-title {
+                font-size: 2rem;
+            }
+
+            .welcome-slide .welcome-title {
+                font-size: 2.5rem;
+            }
+
+            .welcome-slide .welcome-time {
+                font-size: 4rem;
+            }
+
+            .current-time {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4QWKYIX-AYroCdpTheAMGViBXI1mKonSaqA&s" alt="Northwoods Community Church" class="logo">
+                <div>
+                    <div class="church-name">Northwoods Community Church</div>
+                    <div class="tagline">Find hope here</div>
+                </div>
+            </div>
+            <div class="datetime-section">
+                <div class="current-time" id="currentTime">--:--</div>
+                <div class="current-date" id="currentDate">Loading...</div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Featured Event Slide -->
+            <section class="slide-view" id="slideView">
+                <div class="loading" id="loadingState">
+                    <div class="loading-spinner"></div>
+                </div>
+                <div class="slide-content" id="slideContent" style="display: none;">
+                    <span class="slide-label" id="slideLabel">Happening Now</span>
+                    <h1 class="slide-title" id="slideTitle">Event Name</h1>
+                    <div class="slide-time">
+                        <svg class="slide-time-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span class="slide-time-value" id="slideTime">12:00 PM - 1:00 PM</span>
+                    </div>
+                    <div class="slide-location">
+                        <span class="slide-location-label">Location</span>
+                        <div class="slide-location-box" id="slideLocation">Location</div>
+                    </div>
+                    <p class="slide-description" id="slideDescription"></p>
+                </div>
+            </section>
+
+            <!-- Upcoming Events -->
+            <aside class="upcoming-section">
+                <h2 class="section-title">Upcoming Events</h2>
+                <div class="events-list-wrapper">
+                    <div class="events-list" id="eventsList">
+                        <!-- Events will be populated here -->
+                    </div>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            apiUrl: '/api/events', // Proxied through local server to avoid CORS
+            slideInterval: 8000, // 8 seconds per slide
+            refreshInterval: 600000, // 10 minutes
+        };
+
+        // Default welcome slides when no events
+        const WELCOME_SLIDES = [
+            {
+                type: 'welcome',
+                title: 'Welcome to Northwoods',
+                subtitle: "We're glad you're here"
+            },
+            {
+                type: 'info',
+                title: 'Need Assistance?',
+                subtitle: 'Please visit the information desk'
+            },
+            {
+                type: 'time',
+                title: '',
+                subtitle: ''
+            }
+        ];
+
+        // State
+        let events = [];
+        let currentSlideIndex = 0;
+        let slideTimer = null;
+        let progressTimer = null;
+        let progressValue = 0;
+        let isShowingWelcome = false;
+
+        // DOM Elements
+        const elements = {
+            currentTime: document.getElementById('currentTime'),
+            currentDate: document.getElementById('currentDate'),
+            loadingState: document.getElementById('loadingState'),
+            slideContent: document.getElementById('slideContent'),
+            slideView: document.getElementById('slideView'),
+            slideLabel: document.getElementById('slideLabel'),
+            slideTitle: document.getElementById('slideTitle'),
+            slideLocation: document.getElementById('slideLocation'),
+            slideTime: document.getElementById('slideTime'),
+            slideDescription: document.getElementById('slideDescription'),
+            eventsList: document.getElementById('eventsList')
+        };
+
+        // Parse .NET date format - API sends local time encoded as UTC timestamp
+        function parseNetDate(dateString) {
+            if (!dateString) return null;
+            const match = dateString.match(/\/Date\((\d+)([+-]\d{4})?\)\//);
+            if (match) {
+                const timestamp = parseInt(match[1]);
+                // The API sends local time as if it were UTC, so we need to
+                // interpret it as local time by adding back the timezone offset
+                const utcDate = new Date(timestamp);
+                const localDate = new Date(
+                    utcDate.getUTCFullYear(),
+                    utcDate.getUTCMonth(),
+                    utcDate.getUTCDate(),
+                    utcDate.getUTCHours(),
+                    utcDate.getUTCMinutes(),
+                    utcDate.getUTCSeconds()
+                );
+                return localDate;
+            }
+            return new Date(dateString);
+        }
+
+        // Format time
+        function formatTime(date) {
+            return date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Format date
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Check if date is today
+        function isToday(date) {
+            const today = new Date();
+            return date.toDateString() === today.toDateString();
+        }
+
+        // Check if date is tomorrow
+        function isTomorrow(date) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            return date.toDateString() === tomorrow.toDateString();
+        }
+
+        // Get relative date label
+        function getDateLabel(date) {
+            if (isToday(date)) return 'Today';
+            if (isTomorrow(date)) return 'Tomorrow';
+            return date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        }
+
+        // Update clock
+        function updateClock() {
+            const now = new Date();
+            elements.currentTime.textContent = formatTime(now);
+            elements.currentDate.textContent = formatDate(now);
+        }
+
+        // Fetch events from API
+        async function fetchEvents() {
+            try {
+                const response = await fetch(CONFIG.apiUrl);
+                const data = await response.json();
+
+                // Filter out hidden events and sort by start time
+                events = data
+                    .filter(e => !e.IsHiddenFromDisplay)
+                    .map(e => ({
+                        ...e,
+                        startDate: parseNetDate(e.EventStart),
+                        endDate: parseNetDate(e.EventEnd)
+                    }))
+                    .sort((a, b) => a.startDate - b.startDate);
+
+                renderEvents();
+            } catch (error) {
+                console.error('Error fetching events:', error);
+                events = [];
+                renderEvents();
+            }
+        }
+
+        // Scroll the events list to center the active card
+        function scrollToActiveCard() {
+            const wrapper = document.querySelector('.events-list-wrapper');
+            const activeCard = document.querySelector('.event-card.active');
+
+            if (!wrapper || !activeCard) return;
+
+            const wrapperHeight = wrapper.offsetHeight;
+            const cardTop = activeCard.offsetTop;
+            const cardHeight = activeCard.offsetHeight;
+
+            // Calculate scroll position to center the active card
+            const scrollTarget = cardTop - (wrapperHeight / 2) + (cardHeight / 2);
+
+            elements.eventsList.style.transform = `translateY(-${Math.max(0, scrollTarget)}px)`;
+        }
+
+        // Render welcome slide
+        function renderWelcomeSlide() {
+            isShowingWelcome = true;
+            const slideIndex = currentSlideIndex % WELCOME_SLIDES.length;
+            const slide = WELCOME_SLIDES[slideIndex];
+            const now = new Date();
+
+            elements.slideContent.style.opacity = '0';
+
+            setTimeout(() => {
+                if (slide.type === 'time') {
+                    elements.slideContent.innerHTML = `
+                        <div class="welcome-slide">
+                            <div class="welcome-time">${formatTime(now)}</div>
+                            <div class="welcome-date">${formatDate(now)}</div>
+                        </div>
+                    `;
+                } else {
+                    elements.slideContent.innerHTML = `
+                        <div class="welcome-slide">
+                            <h1 class="welcome-title">${slide.title}</h1>
+                            <p class="welcome-subtitle">${slide.subtitle}</p>
+                        </div>
+                    `;
+                }
+
+                elements.loadingState.style.display = 'none';
+                elements.slideContent.style.display = 'flex';
+                elements.slideContent.style.opacity = '1';
+            }, 300);
+
+            // Render all welcome slides in sidebar with current one highlighted
+            elements.eventsList.innerHTML = WELCOME_SLIDES.map((s, index) => {
+                const isActive = index === slideIndex;
+                let content = '';
+                if (s.type === 'time') {
+                    content = `
+                        <div class="event-name">Current Time</div>
+                        <div class="event-meta">
+                            <div class="event-time">${formatTime(now)}</div>
+                        </div>
+                    `;
+                } else if (s.type === 'info') {
+                    content = `
+                        <div class="event-name">Information</div>
+                        <div class="event-meta">
+                            <div class="event-location">Visit the info desk</div>
+                        </div>
+                    `;
+                } else {
+                    content = `
+                        <div class="event-name">Welcome</div>
+                        <div class="event-meta">
+                            <div class="event-location">We're glad you're here</div>
+                        </div>
+                    `;
+                }
+                return `<div class="event-card info ${isActive ? 'active' : ''}">${content}${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}</div>`;
+            }).join('');
+
+            setTimeout(scrollToActiveCard, 50);
+        }
+
+        // Render the featured slide
+        function renderSlide() {
+            if (events.length === 0) {
+                renderWelcomeSlide();
+                return;
+            }
+
+            isShowingWelcome = false;
+            const eventIndex = currentSlideIndex % events.length;
+            const event = events[eventIndex];
+
+            // Fade out content
+            elements.slideContent.style.opacity = '0';
+
+            setTimeout(() => {
+                // Ensure we have the event slide structure (not welcome slide)
+                if (!document.getElementById('slideLabel')) {
+                    elements.slideContent.innerHTML = `
+                        <span class="slide-label" id="slideLabel">Happening Now</span>
+                        <h1 class="slide-title" id="slideTitle">Event Name</h1>
+                        <div class="slide-time">
+                            <svg class="slide-time-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span class="slide-time-value" id="slideTime">12:00 PM - 1:00 PM</span>
+                        </div>
+                        <div class="slide-location">
+                            <span class="slide-location-label">Location</span>
+                            <div class="slide-location-box" id="slideLocation">Location</div>
+                        </div>
+                        <p class="slide-description" id="slideDescription"></p>
+                    `;
+                }
+
+                // Get elements
+                const slideLabel = document.getElementById('slideLabel');
+                const slideTitle = document.getElementById('slideTitle');
+                const slideLocation = document.getElementById('slideLocation');
+                const slideTime = document.getElementById('slideTime');
+                const slideDescription = document.getElementById('slideDescription');
+
+                // Update content
+                slideTitle.textContent = event.DisplayName || event.EventName;
+                slideLocation.textContent = event.SpacesToDisplay || 'TBD';
+                slideTime.textContent = event.EventTimeDisplay || `${formatTime(event.startDate)} - ${formatTime(event.endDate)}`;
+                slideDescription.textContent = event.Description || '';
+                slideDescription.style.display = event.Description ? 'block' : 'none';
+
+                // Update label
+                const now = new Date();
+                slideLabel.classList.remove('happening-now', 'upcoming');
+                if (event.IsAnnouncement) {
+                    slideLabel.textContent = 'Announcement';
+                    slideLabel.classList.add('happening-now');
+                } else if (event.startDate <= now && event.endDate >= now) {
+                    slideLabel.textContent = 'Happening Now';
+                    slideLabel.classList.add('happening-now');
+                } else {
+                    slideLabel.textContent = 'Upcoming';
+                    slideLabel.classList.add('upcoming');
+                }
+
+                // Handle background
+                if (event.BackgroundfileUrl) {
+                    elements.slideView.style.backgroundImage = `url(${event.BackgroundfileUrl})`;
+                    elements.slideView.classList.add('has-background');
+                } else {
+                    elements.slideView.style.backgroundImage = '';
+                    elements.slideView.classList.remove('has-background');
+                }
+
+                // Show content
+                elements.loadingState.style.display = 'none';
+                elements.slideContent.style.display = 'flex';
+                elements.slideContent.style.opacity = '1';
+            }, 300);
+        }
+
+        // Render upcoming events list
+        function renderUpcomingEvents() {
+            if (events.length === 0) {
+                return; // Welcome slides handles sidebar
+            }
+
+            const activeIndex = currentSlideIndex % events.length;
+
+            // Build a looping list: events from activeIndex to end, then divider, then events from start
+            const eventsAfter = events.slice(activeIndex);
+            const eventsBefore = events.slice(0, activeIndex);
+
+            let html = '';
+
+            // Render events from active to end
+            eventsAfter.forEach((event, i) => {
+                const isActive = i === 0;
+                html += `
+                    <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
+                        <div class="event-name">${event.DisplayName || event.EventName}</div>
+                        <div class="event-meta">
+                            <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
+                            ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+                        </div>
+                        ${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}
+                    </div>
+                `;
+            });
+
+            // Add divider and remaining events if we have events before the active one
+            if (eventsBefore.length > 0) {
+                html += `
+                    <div class="events-divider">
+                        <span>Up Next</span>
+                    </div>
+                `;
+
+                eventsBefore.forEach((event) => {
+                    html += `
+                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''}">
+                            <div class="event-name">${event.DisplayName || event.EventName}</div>
+                            <div class="event-meta">
+                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
+                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            elements.eventsList.innerHTML = html;
+
+            // Scroll to center the active card
+            setTimeout(scrollToActiveCard, 50);
+        }
+
+        // Render all events
+        function renderEvents() {
+            renderSlide();
+            renderUpcomingEvents();
+        }
+
+        // Update progress bar on active card
+        function updateCardProgress() {
+            const progressBar = document.getElementById('cardProgress');
+            if (progressBar) {
+                progressBar.style.transform = `scaleX(${Math.min(progressValue, 100) / 100})`;
+            }
+        }
+
+        // Start slide rotation
+        function startSlideRotation() {
+            // Clear existing timers
+            if (slideTimer) clearInterval(slideTimer);
+            if (progressTimer) clearInterval(progressTimer);
+
+            // Reset progress
+            progressValue = 0;
+            updateCardProgress();
+
+            // Progress bar animation
+            progressTimer = setInterval(() => {
+                progressValue += (100 / (CONFIG.slideInterval / 100));
+                updateCardProgress();
+            }, 100);
+
+            // Slide rotation
+            slideTimer = setInterval(() => {
+                currentSlideIndex++;
+                progressValue = 0;
+                renderEvents();
+            }, CONFIG.slideInterval);
+        }
+
+        // Initialize
+        async function init() {
+            // Start clock
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Fetch initial events
+            await fetchEvents();
+
+            // Start slide rotation
+            startSlideRotation();
+
+            // Periodic refresh
+            setInterval(fetchEvents, CONFIG.refreshInterval);
+
+            // Hide cursor after inactivity
+            let cursorTimeout;
+            document.addEventListener('mousemove', () => {
+                document.body.style.cursor = 'default';
+                clearTimeout(cursorTimeout);
+                cursorTimeout = setTimeout(() => {
+                    document.body.style.cursor = 'none';
+                }, 2000);
+            });
+        }
+
+        // Start the app
+        init();
+    </script>
+</body>
+</html>

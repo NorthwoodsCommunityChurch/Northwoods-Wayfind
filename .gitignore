@@ -1,0 +1,32 @@
+# macOS
+.DS_Store
+*.app/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Screenshots and images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.pdf
+
+# Node
+node_modules/
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local scripts with personal paths
+serve.sh
+
+# Claude project docs (local only)
+CLAUDE.md
