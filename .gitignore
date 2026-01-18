@@ -9,6 +9,7 @@
 
 # Screenshots and images
 *.png
+!logo.png
 *.jpg
 *.jpeg
 *.gif
@@ -30,3 +31,4 @@ serve.sh
 
 # Claude project docs (local only)
 CLAUDE.md
+- BRAND/
