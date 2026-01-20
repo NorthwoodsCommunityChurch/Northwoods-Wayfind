@@ -322,6 +322,17 @@
             flex-shrink: 0;
         }
 
+        .room-filter-badge {
+            display: inline-block;
+            background: var(--blue-tint-38);
+            color: var(--text-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-left: 1rem;
+        }
+
         .events-list-wrapper {
             flex: 1;
             overflow: hidden;
@@ -500,6 +511,7 @@
         <header class="header">
             <div class="logo-section">
                 <img src="logo.png" alt="Northwoods Community Church" class="logo">
+                <span class="room-filter-badge" id="roomFilterBadge" style="display: none;"></span>
             </div>
             <div class="datetime-section">
                 <div class="current-time" id="currentTime">--:--</div>
@@ -548,6 +560,14 @@
             slideInterval: 8000, // 8 seconds per slide
             refreshInterval: 600000, // 10 minutes
         };
+
+        // Get room filter from URL parameter (e.g., ?room=Auditorium)
+        function getRoomFilter() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('room');
+        }
+
+        const ROOM_FILTER = getRoomFilter();
 
         // Default welcome slides when no events
         const WELCOME_SLIDES = [
@@ -659,13 +679,20 @@
             elements.currentDate.textContent = formatDate(now);
         }
 
+        // Check if event matches room filter (case-insensitive partial match)
+        function matchesRoomFilter(event) {
+            if (!ROOM_FILTER) return true;
+            const spaces = (event.SpacesToDisplay || '').toLowerCase();
+            return spaces.includes(ROOM_FILTER.toLowerCase());
+        }
+
         // Fetch events from API
         async function fetchEvents() {
             try {
                 const response = await fetch(CONFIG.apiUrl);
                 const data = await response.json();
 
-                // Filter out hidden events and sort by start time
+                // Filter out hidden events, apply room filter, and sort by start time
                 events = data
                     .filter(e => !e.IsHiddenFromDisplay)
                     .map(e => ({
@@ -673,6 +700,7 @@
                         startDate: parseNetDate(e.EventStart),
                         endDate: parseNetDate(e.EventEnd)
                     }))
+                    .filter(matchesRoomFilter)
                     .sort((a, b) => a.startDate - b.startDate);
 
                 renderEvents();
@@ -935,6 +963,13 @@
 
         // Initialize
         async function init() {
+            // Show room filter badge if filtering
+            if (ROOM_FILTER) {
+                const badge = document.getElementById('roomFilterBadge');
+                badge.textContent = ROOM_FILTER;
+                badge.style.display = 'inline-block';
+            }
+
             // Start clock
             updateClock();
             setInterval(updateClock, 1000);
