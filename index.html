@@ -381,6 +381,17 @@
             flex-direction: column;
             gap: 0.7rem;
             transition: transform 0.5s ease;
+            height: 100%;
+        }
+
+        /* When not scrolling, cards fill available space */
+        .events-list.fill-height {
+            justify-content: stretch;
+        }
+
+        .events-list.fill-height .event-card {
+            flex: 1;
+            min-height: 0;
         }
 
         /* Two-column grid layout */
@@ -388,6 +399,10 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.7rem;
+        }
+
+        .events-list.two-column.fill-height {
+            grid-auto-rows: 1fr;
         }
 
         .section-title {
@@ -1078,11 +1093,22 @@
             // Render Happening Now box (always visible)
             elements.happeningNowBox.style.display = 'flex';
 
+            // Determine if we should fill height (when below scroll threshold)
+            const shouldFillHappening = happeningNow.length > 0 && happeningNow.length < SCROLL_THRESHOLD;
+            const shouldFillUpcoming = upcoming.length > 0 && upcoming.length < SCROLL_THRESHOLD;
+
             if (happeningNow.length > 0) {
                 if (useTwoColumnsHappening) {
                     elements.happeningNowList.classList.add('two-column');
                 } else {
                     elements.happeningNowList.classList.remove('two-column');
+                }
+
+                // Add fill-height class when not scrolling
+                if (shouldFillHappening) {
+                    elements.happeningNowList.classList.add('fill-height');
+                } else {
+                    elements.happeningNowList.classList.remove('fill-height');
                 }
 
                 let happeningHtml = '';
@@ -1102,7 +1128,7 @@
                 });
                 elements.happeningNowList.innerHTML = happeningHtml;
             } else {
-                elements.happeningNowList.classList.remove('two-column');
+                elements.happeningNowList.classList.remove('two-column', 'fill-height');
                 elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
             }
 
@@ -1111,6 +1137,13 @@
                 elements.todayEventsList.classList.add('two-column');
             } else {
                 elements.todayEventsList.classList.remove('two-column');
+            }
+
+            // Add fill-height class when not scrolling
+            if (shouldFillUpcoming) {
+                elements.todayEventsList.classList.add('fill-height');
+            } else {
+                elements.todayEventsList.classList.remove('fill-height');
             }
 
             let upcomingHtml = '';
@@ -1130,6 +1163,7 @@
                     `;
                 });
             } else {
+                elements.todayEventsList.classList.remove('fill-height');
                 upcomingHtml = '<div class="no-events-message">No upcoming events</div>';
             }
             elements.todayEventsList.innerHTML = upcomingHtml;
