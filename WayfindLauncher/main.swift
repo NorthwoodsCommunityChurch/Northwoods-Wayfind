@@ -1,7 +1,7 @@
 import Cocoa
 
 // MARK: - Configuration
-let GITHUB_RAW_BASE = "https://raw.githubusercontent.com/NorthwoodsCommunityChurch/Northwoods-Wayfind/main"
+let GITHUB_RAW_BASE = "https://raw.githubusercontent.com/NorthwoodsCommunityChurch/Northwoods-Wayfind/refs/heads/main"
 let FILES_TO_SYNC = ["index.html", "logo.png", "RedRock.otf"]
 let UPDATE_CHECK_INTERVAL: TimeInterval = 3600 // Check every hour
 
