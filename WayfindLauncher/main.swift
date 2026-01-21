@@ -313,6 +313,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         copyRoomURL.target = self
         menu.addItem(copyRoomURL)
 
+        let copyDebugURL = NSMenuItem(title: "  Copy: localhost:8080?debug=true", action: #selector(copyDebugURL), keyEquivalent: "")
+        copyDebugURL.target = self
+        menu.addItem(copyDebugURL)
+
+        menu.addItem(NSMenuItem.separator())
+
+        // Debug mode
+        let debugItem = NSMenuItem(title: "Open Debug Mode in Browser", action: #selector(openDebugMode), keyEquivalent: "d")
+        debugItem.target = self
+        menu.addItem(debugItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // Update section
@@ -523,6 +534,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString("http://localhost:8080?room=", forType: .string)
         showNotification(title: "URL Copied", body: "Add room name to the end")
+    }
+
+    @objc func copyDebugURL() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString("http://localhost:8080?debug=true", forType: .string)
+        showNotification(title: "URL Copied", body: "Debug mode URL")
+    }
+
+    @objc func openDebugMode() {
+        if let url = URL(string: "http://localhost:8080?debug=true") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc func startServerAction() {

@@ -332,6 +332,12 @@
             overflow: hidden;
             height: 100%;
             box-shadow: var(--card-shadow);
+            transition: flex-basis 0.4s ease;
+        }
+
+        /* Two-column mode when many events */
+        .events-sidebar.two-column {
+            flex: 0 0 520px;
         }
 
         /* Unified events container that scrolls as one */
@@ -346,6 +352,17 @@
             flex-direction: column;
             gap: 0.75rem;
             transition: transform 0.5s ease;
+        }
+
+        /* Two-column grid layout */
+        .events-unified-list.two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .events-unified-list.two-column .section-header {
+            grid-column: 1 / -1;
         }
 
         /* Section headers within the unified list */
@@ -377,6 +394,63 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             flex-shrink: 0;
+        }
+
+        /* Debug Panel Styles */
+        .debug-panel {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid var(--blue-tint-38);
+            border-radius: 12px;
+            padding: 1rem;
+            z-index: 1000;
+            color: white;
+            font-size: 0.85rem;
+            min-width: 280px;
+            cursor: default;
+        }
+
+        .debug-panel h3 {
+            margin: 0 0 1rem 0;
+            font-size: 1rem;
+            color: var(--primary-light);
+        }
+
+        .debug-slider-group {
+            margin-bottom: 1rem;
+        }
+
+        .debug-slider-group label {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .debug-slider-group input[type="range"] {
+            width: 100%;
+            margin-bottom: 0.25rem;
+        }
+
+        .debug-slider-group .value {
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .debug-panel button {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--primary-color);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .debug-panel button:hover {
+            background: var(--primary-light);
         }
 
         .no-events-message {
@@ -570,7 +644,7 @@
             </section>
 
             <!-- Events Sidebar - Unified scrolling list -->
-            <aside class="events-sidebar">
+            <aside class="events-sidebar" id="eventsSidebar">
                 <h2 class="section-title">Today's Events</h2>
                 <div class="events-scroll-container">
                     <div class="events-unified-list" id="eventsList">
@@ -579,6 +653,22 @@
                 </div>
             </aside>
         </main>
+    </div>
+
+    <!-- Debug Panel (only shown in debug mode) -->
+    <div class="debug-panel" id="debugPanel" style="display: none;">
+        <h3>Debug Mode</h3>
+        <div class="debug-slider-group">
+            <label>Happening Now Events</label>
+            <input type="range" id="debugHappeningSlider" min="0" max="15" value="2">
+            <div class="value" id="debugHappeningValue">2</div>
+        </div>
+        <div class="debug-slider-group">
+            <label>Upcoming Events</label>
+            <input type="range" id="debugUpcomingSlider" min="0" max="20" value="4">
+            <div class="value" id="debugUpcomingValue">4</div>
+        </div>
+        <button id="debugApplyBtn">Apply Changes</button>
     </div>
 
     <script>
@@ -595,7 +685,18 @@
             return params.get('room');
         }
 
+        // Check for debug mode (e.g., ?debug=true)
+        function isDebugMode() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('debug') === 'true';
+        }
+
         const ROOM_FILTER = getRoomFilter();
+        const DEBUG_MODE = isDebugMode();
+
+        // Debug state
+        let debugHappeningNow = 2;
+        let debugUpcoming = 4;
 
         // Default welcome slides when no events
         const WELCOME_SLIDES = [
@@ -882,12 +983,19 @@
             }, 300);
         }
 
+        // Threshold for switching to two-column layout
+        const TWO_COLUMN_THRESHOLD = 6;
+
         // Render events sidebar as unified list with section headers
         function renderUpcomingEvents() {
+            const sidebar = document.getElementById('eventsSidebar');
+
             if (events.length === 0) {
                 elements.eventsList.innerHTML = `
                     <div class="no-events-message">No events scheduled</div>
                 `;
+                elements.eventsList.classList.remove('two-column');
+                sidebar.classList.remove('two-column');
                 return;
             }
 
@@ -901,6 +1009,19 @@
             const upcoming = events.filter(e =>
                 (e.startDate > now || e.IsAnnouncement)
             );
+
+            // Determine if we need two columns
+            const totalEvents = happeningNow.length + upcoming.length;
+            const useTwoColumns = totalEvents >= TWO_COLUMN_THRESHOLD;
+
+            // Apply two-column class with smooth transition
+            if (useTwoColumns) {
+                elements.eventsList.classList.add('two-column');
+                sidebar.classList.add('two-column');
+            } else {
+                elements.eventsList.classList.remove('two-column');
+                sidebar.classList.remove('two-column');
+            }
 
             let html = '';
 
@@ -988,6 +1109,91 @@
             }, CONFIG.slideInterval);
         }
 
+        // Generate fake events for debug mode
+        function generateDebugEvents(happeningCount, upcomingCount) {
+            const now = new Date();
+            const fakeEvents = [];
+            const rooms = ['Auditorium', 'Room 101', 'Fellowship Hall', 'Chapel', 'Youth Room', 'Conference Room A', 'Lobby'];
+            const eventNames = [
+                'Sunday Service', 'Youth Group', 'Bible Study', 'Prayer Meeting',
+                'Choir Practice', 'Staff Meeting', 'Community Lunch', 'Kids Church',
+                'Marriage Workshop', 'New Members Class', 'Volunteer Training',
+                'Board Meeting', 'Worship Night', 'Small Group', 'Recovery Group'
+            ];
+
+            // Generate "happening now" events
+            for (let i = 0; i < happeningCount; i++) {
+                const startTime = new Date(now.getTime() - (30 + i * 15) * 60000);
+                const endTime = new Date(now.getTime() + (60 + i * 15) * 60000);
+                fakeEvents.push({
+                    EventName: eventNames[i % eventNames.length],
+                    DisplayName: eventNames[i % eventNames.length],
+                    SpacesToDisplay: rooms[i % rooms.length],
+                    EventStart: `/Date(${startTime.getTime()})/`,
+                    EventEnd: `/Date(${endTime.getTime()})/`,
+                    EventTimeDisplay: `${formatTime(startTime)} - ${formatTime(endTime)}`,
+                    IsAnnouncement: false,
+                    IsHiddenFromDisplay: false,
+                    startDate: startTime,
+                    endDate: endTime
+                });
+            }
+
+            // Generate "upcoming" events
+            for (let i = 0; i < upcomingCount; i++) {
+                const startTime = new Date(now.getTime() + (30 + i * 45) * 60000);
+                const endTime = new Date(startTime.getTime() + 60 * 60000);
+                const nameIndex = (happeningCount + i) % eventNames.length;
+                fakeEvents.push({
+                    EventName: eventNames[nameIndex],
+                    DisplayName: eventNames[nameIndex],
+                    SpacesToDisplay: rooms[(happeningCount + i) % rooms.length],
+                    EventStart: `/Date(${startTime.getTime()})/`,
+                    EventEnd: `/Date(${endTime.getTime()})/`,
+                    EventTimeDisplay: `${formatTime(startTime)} - ${formatTime(endTime)}`,
+                    IsAnnouncement: false,
+                    IsHiddenFromDisplay: false,
+                    startDate: startTime,
+                    endDate: endTime
+                });
+            }
+
+            return fakeEvents.sort((a, b) => a.startDate - b.startDate);
+        }
+
+        // Initialize debug panel
+        function initDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            const happeningSlider = document.getElementById('debugHappeningSlider');
+            const upcomingSlider = document.getElementById('debugUpcomingSlider');
+            const happeningValue = document.getElementById('debugHappeningValue');
+            const upcomingValue = document.getElementById('debugUpcomingValue');
+            const applyBtn = document.getElementById('debugApplyBtn');
+
+            panel.style.display = 'block';
+            document.body.style.cursor = 'default';
+
+            happeningSlider.addEventListener('input', () => {
+                happeningValue.textContent = happeningSlider.value;
+            });
+
+            upcomingSlider.addEventListener('input', () => {
+                upcomingValue.textContent = upcomingSlider.value;
+            });
+
+            applyBtn.addEventListener('click', () => {
+                debugHappeningNow = parseInt(happeningSlider.value);
+                debugUpcoming = parseInt(upcomingSlider.value);
+                events = generateDebugEvents(debugHappeningNow, debugUpcoming);
+                currentSlideIndex = 0;
+                renderEvents();
+                startSlideRotation();
+            });
+
+            // Generate initial debug events
+            events = generateDebugEvents(debugHappeningNow, debugUpcoming);
+        }
+
         // Initialize
         async function init() {
             // Show room filter badge if filtering
@@ -1001,24 +1207,31 @@
             updateClock();
             setInterval(updateClock, 1000);
 
-            // Fetch initial events
-            await fetchEvents();
+            // Debug mode or normal mode
+            if (DEBUG_MODE) {
+                initDebugPanel();
+                renderEvents();
+            } else {
+                // Fetch initial events
+                await fetchEvents();
+                // Periodic refresh
+                setInterval(fetchEvents, CONFIG.refreshInterval);
+            }
 
             // Start slide rotation
             startSlideRotation();
 
-            // Periodic refresh
-            setInterval(fetchEvents, CONFIG.refreshInterval);
-
-            // Hide cursor after inactivity
-            let cursorTimeout;
-            document.addEventListener('mousemove', () => {
-                document.body.style.cursor = 'default';
-                clearTimeout(cursorTimeout);
-                cursorTimeout = setTimeout(() => {
-                    document.body.style.cursor = 'none';
-                }, 2000);
-            });
+            // Hide cursor after inactivity (unless debug mode)
+            if (!DEBUG_MODE) {
+                let cursorTimeout;
+                document.addEventListener('mousemove', () => {
+                    document.body.style.cursor = 'default';
+                    clearTimeout(cursorTimeout);
+                    cursorTimeout = setTimeout(() => {
+                        document.body.style.cursor = 'none';
+                    }, 2000);
+                });
+            }
         }
 
         // Start the app
