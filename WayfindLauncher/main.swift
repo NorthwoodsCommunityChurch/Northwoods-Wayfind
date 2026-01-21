@@ -375,7 +375,7 @@ let INDEX_HTML = """
         .events-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 0.5rem;
             transition: transform 0.5s ease;
         }
 
@@ -383,7 +383,7 @@ let INDEX_HTML = """
         .events-list.two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0.75rem;
+            gap: 0.5rem;
         }
 
         .section-title {
@@ -462,8 +462,8 @@ let INDEX_HTML = """
 
         .event-card {
             background: var(--blue-tint-18);
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 10px;
+            padding: 0.65rem 0.85rem;
             transition: all 0.3s ease;
             border-left: 4px solid var(--primary-color);
             flex-shrink: 0;
@@ -527,16 +527,17 @@ let INDEX_HTML = """
         }
 
         .event-name {
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.2rem;
+            line-height: 1.2;
         }
 
         .event-meta {
             display: flex;
             flex-direction: column;
-            gap: 0.15rem;
-            font-size: 0.85rem;
+            gap: 0.1rem;
+            font-size: 0.8rem;
             color: var(--text-primary);
             opacity: 0.85;
         }
@@ -738,6 +739,8 @@ let INDEX_HTML = """
         let progressTimer = null;
         let progressValue = 0;
         let isShowingWelcome = false;
+        let lastHappeningCount = 0;
+        let lastUpcomingCount = 0;
 
         // DOM Elements
         const elements = {
@@ -857,16 +860,22 @@ let INDEX_HTML = """
             }
         }
 
-        // Scroll the events list to show the active card
-        function scrollToActiveCard() {
+        // Scroll the events list to show the active card (only if event count >= SCROLL_THRESHOLD)
+        function scrollToActiveCard(happeningCount, upcomingCount) {
             // Check both lists for active card
             const lists = [
-                { wrapper: elements.happeningNowBox?.querySelector('.events-scroll-container'), list: elements.happeningNowList },
-                { wrapper: elements.todayEventsBox?.querySelector('.events-scroll-container'), list: elements.todayEventsList }
+                { wrapper: elements.happeningNowBox?.querySelector('.events-scroll-container'), list: elements.happeningNowList, count: happeningCount },
+                { wrapper: elements.todayEventsBox?.querySelector('.events-scroll-container'), list: elements.todayEventsList, count: upcomingCount }
             ];
 
-            lists.forEach(({ wrapper, list }) => {
+            lists.forEach(({ wrapper, list, count }) => {
                 if (!wrapper || !list) return;
+
+                // Only scroll if count meets threshold
+                if (count < SCROLL_THRESHOLD) {
+                    list.style.transform = 'translateY(0)';
+                    return;
+                }
 
                 const activeCard = list.querySelector('.event-card.active');
                 const wrapperHeight = wrapper.offsetHeight;
@@ -1010,8 +1019,10 @@ let INDEX_HTML = """
             }, 300);
         }
 
-        // Threshold for switching to two-column layout
-        const TWO_COLUMN_THRESHOLD = 6;
+        // Thresholds for layout and scrolling
+        const TWO_COLUMN_THRESHOLD = 5;  // Switch to two columns at 5+ events
+        const SCROLL_THRESHOLD = 9;       // Start scrolling at 9+ events
+        const FAST_SPEED_THRESHOLD = 8;   // Double speed at 8+ events in either section
 
         // Render events sidebar with two separate boxes
         function renderUpcomingEvents() {
@@ -1109,8 +1120,12 @@ let INDEX_HTML = """
             }
             elements.todayEventsList.innerHTML = upcomingHtml;
 
-            // Scroll to center the active card (only if list is taller than container)
-            setTimeout(scrollToActiveCard, 50);
+            // Store counts for speed adjustment
+            lastHappeningCount = happeningNow.length;
+            lastUpcomingCount = upcoming.length;
+
+            // Scroll to center the active card (only if count meets threshold)
+            setTimeout(() => scrollToActiveCard(happeningNow.length, upcoming.length), 50);
         }
 
         // Render all events
@@ -1127,6 +1142,14 @@ let INDEX_HTML = """
             }
         }
 
+        // Get effective slide interval (halved if 8+ events in either section)
+        function getEffectiveSlideInterval() {
+            if (lastHappeningCount >= FAST_SPEED_THRESHOLD || lastUpcomingCount >= FAST_SPEED_THRESHOLD) {
+                return CONFIG.slideInterval / 2;
+            }
+            return CONFIG.slideInterval;
+        }
+
         // Start slide rotation
         function startSlideRotation() {
             // Clear existing timers
@@ -1137,9 +1160,11 @@ let INDEX_HTML = """
             progressValue = 0;
             updateCardProgress();
 
+            const interval = getEffectiveSlideInterval();
+
             // Progress bar animation
             progressTimer = setInterval(() => {
-                progressValue += (100 / (CONFIG.slideInterval / 100));
+                progressValue += (100 / (interval / 100));
                 updateCardProgress();
             }, 100);
 
@@ -1148,7 +1173,9 @@ let INDEX_HTML = """
                 currentSlideIndex++;
                 progressValue = 0;
                 renderEvents();
-            }, CONFIG.slideInterval);
+                // Restart rotation with potentially new interval
+                startSlideRotation();
+            }, interval);
         }
 
         // Generate fake events for debug mode
@@ -1513,6 +1540,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
+        let openDebugItem = NSMenuItem(title: "Open Debug Mode", action: #selector(openDebugMode), keyEquivalent: "d")
+        openDebugItem.target = self
+        menu.addItem(openDebugItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         // Update section
         let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "u")
         updateItem.target = self
@@ -1727,6 +1760,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString("http://localhost:8080?debug=true", forType: .string)
         showNotification(title: "URL Copied", body: "Debug mode URL")
+    }
+
+    @objc func openDebugMode() {
+        if let url = URL(string: "http://localhost:8080?debug=true") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     @objc func checkForUpdates() {

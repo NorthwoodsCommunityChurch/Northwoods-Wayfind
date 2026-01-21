@@ -301,6 +301,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {{
 
         menu.addItem(NSMenuItem.separator())
 
+        let openDebugItem = NSMenuItem(title: "Open Debug Mode", action: #selector(openDebugMode), keyEquivalent: "d")
+        openDebugItem.target = self
+        menu.addItem(openDebugItem)
+
+        menu.addItem(NSMenuItem.separator())
+
         // Update section
         let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "u")
         updateItem.target = self
@@ -515,6 +521,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {{
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString("http://localhost:8080?debug=true", forType: .string)
         showNotification(title: "URL Copied", body: "Debug mode URL")
+    }}
+
+    @objc func openDebugMode() {{
+        if let url = URL(string: "http://localhost:8080?debug=true") {{
+            NSWorkspace.shared.open(url)
+        }}
     }}
 
     @objc func checkForUpdates() {{
