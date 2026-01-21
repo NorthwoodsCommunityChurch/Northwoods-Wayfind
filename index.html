@@ -921,10 +921,9 @@
             }, 300);
 
             // Show "No events" in sidebar when showing welcome slides
-            elements.happeningNowBox.style.display = 'none';
-            elements.todayEventsList.innerHTML = `
-                <div class="no-events-message">No events scheduled</div>
-            `;
+            elements.happeningNowBox.style.display = 'flex';
+            elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
+            elements.todayEventsList.innerHTML = '<div class="no-events-message">No events scheduled</div>';
         }
 
         // Render the featured slide
@@ -1011,10 +1010,9 @@
             const sidebar = document.getElementById('eventsSidebar');
 
             if (events.length === 0) {
-                elements.happeningNowBox.style.display = 'none';
-                elements.todayEventsList.innerHTML = `
-                    <div class="no-events-message">No events scheduled</div>
-                `;
+                elements.happeningNowBox.style.display = 'flex';
+                elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
+                elements.todayEventsList.innerHTML = '<div class="no-events-message">No events scheduled</div>';
                 elements.happeningNowList.classList.remove('two-column');
                 elements.todayEventsList.classList.remove('two-column');
                 sidebar.classList.remove('two-column');
@@ -1044,10 +1042,10 @@
                 sidebar.classList.remove('two-column');
             }
 
-            // Render Happening Now box
-            if (happeningNow.length > 0) {
-                elements.happeningNowBox.style.display = 'flex';
+            // Render Happening Now box (always visible)
+            elements.happeningNowBox.style.display = 'flex';
 
+            if (happeningNow.length > 0) {
                 if (useTwoColumnsHappening) {
                     elements.happeningNowList.classList.add('two-column');
                 } else {
@@ -1071,7 +1069,8 @@
                 });
                 elements.happeningNowList.innerHTML = happeningHtml;
             } else {
-                elements.happeningNowBox.style.display = 'none';
+                elements.happeningNowList.classList.remove('two-column');
+                elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
             }
 
             // Render Today's Events (upcoming) box
