@@ -110,24 +110,34 @@
             box-shadow: var(--card-shadow);
         }
 
-        /* Corner elements inside slide view */
-        .slide-corner-logo {
+        /* Header bar inside slide view */
+        .slide-header {
             position: absolute;
-            top: 1.5rem;
-            left: 1.5rem;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem 2rem;
             z-index: 10;
+            background: linear-gradient(180deg, rgba(0, 40, 85, 0.6) 0%, transparent 100%);
+        }
+
+        .slide-header-left {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            flex: 1;
         }
 
-        .slide-corner-logo .logo {
+        .slide-header-left .logo {
             height: 60px;
             width: auto;
             object-fit: contain;
         }
 
-        .slide-corner-logo .room-filter-badge {
+        .slide-header-left .room-filter-badge {
             display: inline-block;
             background: var(--blue-tint-38);
             color: var(--text-primary);
@@ -137,21 +147,22 @@
             font-weight: 500;
         }
 
-        .slide-corner-clock {
-            position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
-            z-index: 10;
+        .slide-header-center {
+            flex: 0 0 auto;
+        }
+
+        .slide-header-right {
+            flex: 1;
             text-align: right;
         }
 
-        .slide-corner-clock .current-time {
+        .slide-header-right .current-time {
             font-size: 2.75rem;
             font-weight: 300;
             letter-spacing: -0.02em;
         }
 
-        .slide-corner-clock .current-date {
+        .slide-header-right .current-date {
             font-size: 1.1rem;
             color: var(--text-secondary);
             margin-top: 0.25rem;
@@ -177,11 +188,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-evenly;
+            justify-content: center;
+            gap: 1.5rem;
             text-align: center;
             width: 100%;
             height: 100%;
-            padding: 2rem;
+            padding: 6rem 2rem 2rem 2rem;
             transition: opacity 0.4s ease;
         }
 
@@ -608,22 +620,25 @@
         <main class="main-content">
             <!-- Featured Event Slide -->
             <section class="slide-view" id="slideView">
-                <!-- Corner Logo -->
-                <div class="slide-corner-logo">
-                    <img src="logo.png" alt="Northwoods Community Church" class="logo">
-                    <span class="room-filter-badge" id="roomFilterBadge" style="display: none;"></span>
-                </div>
-                <!-- Corner Clock -->
-                <div class="slide-corner-clock">
-                    <div class="current-time" id="currentTime">--:--</div>
-                    <div class="current-date" id="currentDate">Loading...</div>
+                <!-- Header Bar -->
+                <div class="slide-header">
+                    <div class="slide-header-left">
+                        <img src="logo.png" alt="Northwoods Community Church" class="logo">
+                        <span class="room-filter-badge" id="roomFilterBadge" style="display: none;"></span>
+                    </div>
+                    <div class="slide-header-center">
+                        <span class="slide-label" id="slideLabel">Happening Now</span>
+                    </div>
+                    <div class="slide-header-right">
+                        <div class="current-time" id="currentTime">--:--</div>
+                        <div class="current-date" id="currentDate">Loading...</div>
+                    </div>
                 </div>
 
                 <div class="loading" id="loadingState">
                     <div class="loading-spinner"></div>
                 </div>
                 <div class="slide-content" id="slideContent" style="display: none;">
-                    <span class="slide-label" id="slideLabel">Happening Now</span>
                     <h1 class="slide-title" id="slideTitle">Event Name</h1>
                     <div class="slide-time">
                         <svg class="slide-time-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -905,6 +920,14 @@
             const slide = WELCOME_SLIDES[slideIndex];
             const now = new Date();
 
+            // Update header label for welcome slides
+            const slideLabel = document.getElementById('slideLabel');
+            if (slideLabel) {
+                slideLabel.textContent = 'Welcome';
+                slideLabel.classList.remove('happening-now', 'upcoming');
+                slideLabel.classList.add('happening-now');
+            }
+
             elements.slideContent.style.opacity = '0';
 
             setTimeout(() => {
@@ -951,9 +974,8 @@
 
             setTimeout(() => {
                 // Ensure we have the event slide structure (not welcome slide)
-                if (!document.getElementById('slideLabel')) {
+                if (!document.getElementById('slideTitle')) {
                     elements.slideContent.innerHTML = `
-                        <span class="slide-label" id="slideLabel">Happening Now</span>
                         <h1 class="slide-title" id="slideTitle">Event Name</h1>
                         <div class="slide-time">
                             <svg class="slide-time-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -967,7 +989,7 @@
                     `;
                 }
 
-                // Get elements
+                // Get elements (slideLabel is in the header, not slideContent)
                 const slideLabel = document.getElementById('slideLabel');
                 const slideTitle = document.getElementById('slideTitle');
                 const slideLocation = document.getElementById('slideLocation');
