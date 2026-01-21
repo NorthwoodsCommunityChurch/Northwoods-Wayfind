@@ -390,7 +390,6 @@
             display: flex;
             flex-direction: column;
             gap: 0.7rem;
-            transition: transform 0.5s ease;
             height: 100%;
         }
 
@@ -414,6 +413,15 @@
         .events-list.two-column.fill-height {
             /* Always calculate as 3 rows: (100% - 2 gaps) / 3 */
             grid-auto-rows: calc((100% - 1.4rem) / 3);
+        }
+
+        /* Scroll mode - list grows beyond container, cards use CSS variable for height */
+        .events-list.scroll-mode {
+            height: auto;
+        }
+
+        .events-list.scroll-mode.two-column {
+            grid-auto-rows: var(--card-height, auto);
         }
 
         .section-title {
@@ -513,6 +521,7 @@
         /* In scroll mode, cards have fixed height matching 3-row sizing */
         .events-list.scroll-mode .event-card {
             flex-shrink: 0;
+            height: var(--card-height, auto);
         }
 
         .event-card.active {
@@ -1070,6 +1079,14 @@
         const SCROLL_THRESHOLD = 7;       // Start scrolling at 7+ events
         const FAST_SPEED_THRESHOLD = 7;   // Double speed at 7+ events in either section
 
+        // Calculate card height based on container, assuming 3 rows with gaps
+        function calculateCardHeight(container) {
+            const containerHeight = container.offsetHeight;
+            const gap = 0.7 * 16; // 0.7rem in pixels (assuming 16px base)
+            const totalGaps = 2 * gap; // 2 gaps for 3 rows
+            return (containerHeight - totalGaps) / 3;
+        }
+
         // Render events sidebar with two separate boxes
         function renderUpcomingEvents() {
             const sidebar = document.getElementById('eventsSidebar');
@@ -1132,13 +1149,18 @@
                     elements.happeningNowList.classList.add('fill-height');
                     elements.happeningNowList.classList.remove('scroll-mode');
                     happeningScrollContainer.classList.remove('scrollable');
+                    elements.happeningNowList.style.removeProperty('--card-height');
                 } else if (shouldScrollHappening) {
                     elements.happeningNowList.classList.remove('fill-height');
                     elements.happeningNowList.classList.add('scroll-mode');
                     happeningScrollContainer.classList.add('scrollable');
+                    // Calculate and set fixed card height
+                    const cardHeight = calculateCardHeight(happeningScrollContainer);
+                    elements.happeningNowList.style.setProperty('--card-height', `${cardHeight}px`);
                 } else {
                     elements.happeningNowList.classList.remove('fill-height', 'scroll-mode');
                     happeningScrollContainer.classList.remove('scrollable');
+                    elements.happeningNowList.style.removeProperty('--card-height');
                 }
 
                 let happeningHtml = '';
@@ -1160,6 +1182,7 @@
             } else {
                 elements.happeningNowList.classList.remove('two-column', 'fill-height', 'scroll-mode');
                 happeningScrollContainer.classList.remove('scrollable');
+                elements.happeningNowList.style.removeProperty('--card-height');
                 elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
             }
 
@@ -1175,13 +1198,18 @@
                 elements.todayEventsList.classList.add('fill-height');
                 elements.todayEventsList.classList.remove('scroll-mode');
                 upcomingScrollContainer.classList.remove('scrollable');
+                elements.todayEventsList.style.removeProperty('--card-height');
             } else if (shouldScrollUpcoming) {
                 elements.todayEventsList.classList.remove('fill-height');
                 elements.todayEventsList.classList.add('scroll-mode');
                 upcomingScrollContainer.classList.add('scrollable');
+                // Calculate and set fixed card height
+                const cardHeight = calculateCardHeight(upcomingScrollContainer);
+                elements.todayEventsList.style.setProperty('--card-height', `${cardHeight}px`);
             } else {
                 elements.todayEventsList.classList.remove('fill-height', 'scroll-mode');
                 upcomingScrollContainer.classList.remove('scrollable');
+                elements.todayEventsList.style.removeProperty('--card-height');
             }
 
             let upcomingHtml = '';
@@ -1203,6 +1231,7 @@
             } else {
                 elements.todayEventsList.classList.remove('fill-height', 'scroll-mode');
                 upcomingScrollContainer.classList.remove('scrollable');
+                elements.todayEventsList.style.removeProperty('--card-height');
                 upcomingHtml = '<div class="no-events-message">No upcoming events</div>';
             }
             elements.todayEventsList.innerHTML = upcomingHtml;
