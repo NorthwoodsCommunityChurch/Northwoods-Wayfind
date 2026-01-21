@@ -321,17 +321,13 @@
             margin-top: 0.6rem;
         }
 
-        /* Events Sidebar - Single unified container */
+        /* Events Sidebar - Contains two separate boxes */
         .events-sidebar {
             flex: 0 0 380px;
-            background: var(--background-card);
-            border-radius: 20px;
-            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            gap: 1rem;
             height: 100%;
-            box-shadow: var(--card-shadow);
             transition: flex-basis 0.4s ease;
         }
 
@@ -340,14 +336,35 @@
             flex: 0 0 520px;
         }
 
-        /* Unified events container that scrolls as one */
+        /* Individual section boxes */
+        .events-section-box {
+            background: var(--background-card);
+            border-radius: 20px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        .events-section-box.happening-now-box {
+            flex: 0 0 auto;
+            max-height: 50%;
+        }
+
+        .events-section-box.today-events-box {
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Scroll container within each box */
         .events-scroll-container {
             flex: 1;
             overflow: hidden;
             position: relative;
         }
 
-        .events-unified-list {
+        .events-list {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
@@ -355,34 +372,10 @@
         }
 
         /* Two-column grid layout */
-        .events-unified-list.two-column {
+        .events-list.two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
-        }
-
-        .events-unified-list.two-column .section-header {
-            grid-column: 1 / -1;
-        }
-
-        /* Section headers within the unified list */
-        .section-header {
-            font-family: 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            padding: 0.5rem 0;
-            margin-top: 0.5rem;
-        }
-
-        .section-header:first-child {
-            margin-top: 0;
-        }
-
-        .section-header.muted {
-            color: var(--text-secondary);
         }
 
         .section-title {
@@ -643,12 +636,25 @@
                 </div>
             </section>
 
-            <!-- Events Sidebar - Unified scrolling list -->
+            <!-- Events Sidebar - Two separate boxes -->
             <aside class="events-sidebar" id="eventsSidebar">
-                <h2 class="section-title">Today's Events</h2>
-                <div class="events-scroll-container">
-                    <div class="events-unified-list" id="eventsList">
-                        <!-- Events will be populated here with section headers -->
+                <!-- Happening Now Box -->
+                <div class="events-section-box happening-now-box" id="happeningNowBox" style="display: none;">
+                    <h2 class="section-title">Happening Now</h2>
+                    <div class="events-scroll-container">
+                        <div class="events-list" id="happeningNowList">
+                            <!-- Happening now events will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Events Box -->
+                <div class="events-section-box today-events-box" id="todayEventsBox">
+                    <h2 class="section-title">Today's Events</h2>
+                    <div class="events-scroll-container">
+                        <div class="events-list" id="todayEventsList">
+                            <!-- Today's events will be populated here -->
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -737,7 +743,10 @@
             slideLocation: document.getElementById('slideLocation'),
             slideTime: document.getElementById('slideTime'),
             slideDescription: document.getElementById('slideDescription'),
-            eventsList: document.getElementById('eventsList')
+            happeningNowBox: document.getElementById('happeningNowBox'),
+            happeningNowList: document.getElementById('happeningNowList'),
+            todayEventsBox: document.getElementById('todayEventsBox'),
+            todayEventsList: document.getElementById('todayEventsList')
         };
 
         // Parse .NET date format - API sends local time encoded as UTC timestamp
@@ -842,32 +851,42 @@
 
         // Scroll the events list to show the active card
         function scrollToActiveCard() {
-            const wrapper = document.querySelector('.events-scroll-container');
-            const activeCard = document.querySelector('.event-card.active');
-            const list = elements.eventsList;
+            // Check both lists for active card
+            const lists = [
+                { wrapper: elements.happeningNowBox?.querySelector('.events-scroll-container'), list: elements.happeningNowList },
+                { wrapper: elements.todayEventsBox?.querySelector('.events-scroll-container'), list: elements.todayEventsList }
+            ];
 
-            if (!wrapper || !activeCard || !list) return;
+            lists.forEach(({ wrapper, list }) => {
+                if (!wrapper || !list) return;
 
-            const wrapperHeight = wrapper.offsetHeight;
-            const listHeight = list.offsetHeight;
+                const activeCard = list.querySelector('.event-card.active');
+                const wrapperHeight = wrapper.offsetHeight;
+                const listHeight = list.offsetHeight;
 
-            // If list fits without scrolling, don't scroll
-            if (listHeight <= wrapperHeight) {
-                list.style.transform = 'translateY(0)';
-                return;
-            }
+                // If list fits without scrolling, don't scroll
+                if (listHeight <= wrapperHeight) {
+                    list.style.transform = 'translateY(0)';
+                    return;
+                }
 
-            const cardTop = activeCard.offsetTop;
-            const cardHeight = activeCard.offsetHeight;
+                if (!activeCard) {
+                    list.style.transform = 'translateY(0)';
+                    return;
+                }
 
-            // Calculate scroll position to center the active card
-            const scrollTarget = cardTop - (wrapperHeight / 2) + (cardHeight / 2);
+                const cardTop = activeCard.offsetTop;
+                const cardHeight = activeCard.offsetHeight;
 
-            // Clamp scroll to valid range
-            const maxScroll = listHeight - wrapperHeight;
-            const clampedScroll = Math.max(0, Math.min(scrollTarget, maxScroll));
+                // Calculate scroll position to center the active card
+                const scrollTarget = cardTop - (wrapperHeight / 2) + (cardHeight / 2);
 
-            list.style.transform = `translateY(-${clampedScroll}px)`;
+                // Clamp scroll to valid range
+                const maxScroll = listHeight - wrapperHeight;
+                const clampedScroll = Math.max(0, Math.min(scrollTarget, maxScroll));
+
+                list.style.transform = `translateY(-${clampedScroll}px)`;
+            });
         }
 
         // Render welcome slide
@@ -902,7 +921,8 @@
             }, 300);
 
             // Show "No events" in sidebar when showing welcome slides
-            elements.eventsList.innerHTML = `
+            elements.happeningNowBox.style.display = 'none';
+            elements.todayEventsList.innerHTML = `
                 <div class="no-events-message">No events scheduled</div>
             `;
         }
@@ -986,15 +1006,17 @@
         // Threshold for switching to two-column layout
         const TWO_COLUMN_THRESHOLD = 6;
 
-        // Render events sidebar as unified list with section headers
+        // Render events sidebar with two separate boxes
         function renderUpcomingEvents() {
             const sidebar = document.getElementById('eventsSidebar');
 
             if (events.length === 0) {
-                elements.eventsList.innerHTML = `
+                elements.happeningNowBox.style.display = 'none';
+                elements.todayEventsList.innerHTML = `
                     <div class="no-events-message">No events scheduled</div>
                 `;
-                elements.eventsList.classList.remove('two-column');
+                elements.happeningNowList.classList.remove('two-column');
+                elements.todayEventsList.classList.remove('two-column');
                 sidebar.classList.remove('two-column');
                 return;
             }
@@ -1010,28 +1032,33 @@
                 (e.startDate > now || e.IsAnnouncement)
             );
 
-            // Determine if we need two columns
-            const totalEvents = happeningNow.length + upcoming.length;
-            const useTwoColumns = totalEvents >= TWO_COLUMN_THRESHOLD;
+            // Determine if we need two columns for each section
+            const useTwoColumnsHappening = happeningNow.length >= TWO_COLUMN_THRESHOLD;
+            const useTwoColumnsUpcoming = upcoming.length >= TWO_COLUMN_THRESHOLD;
+            const useTwoColumns = useTwoColumnsHappening || useTwoColumnsUpcoming;
 
-            // Apply two-column class with smooth transition
+            // Apply two-column class to sidebar for width
             if (useTwoColumns) {
-                elements.eventsList.classList.add('two-column');
                 sidebar.classList.add('two-column');
             } else {
-                elements.eventsList.classList.remove('two-column');
                 sidebar.classList.remove('two-column');
             }
 
-            let html = '';
-
-            // Happening Now section (if any)
+            // Render Happening Now box
             if (happeningNow.length > 0) {
-                html += `<div class="section-header">Happening Now</div>`;
+                elements.happeningNowBox.style.display = 'flex';
+
+                if (useTwoColumnsHappening) {
+                    elements.happeningNowList.classList.add('two-column');
+                } else {
+                    elements.happeningNowList.classList.remove('two-column');
+                }
+
+                let happeningHtml = '';
                 happeningNow.forEach((event) => {
                     const globalIndex = events.indexOf(event);
                     const isActive = globalIndex === activeIndex;
-                    html += `
+                    happeningHtml += `
                         <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
                             <div class="event-name">${event.DisplayName || event.EventName}</div>
                             <div class="event-meta">
@@ -1042,17 +1069,24 @@
                         </div>
                     `;
                 });
+                elements.happeningNowList.innerHTML = happeningHtml;
+            } else {
+                elements.happeningNowBox.style.display = 'none';
             }
 
-            // Upcoming section (if any)
+            // Render Today's Events (upcoming) box
+            if (useTwoColumnsUpcoming) {
+                elements.todayEventsList.classList.add('two-column');
+            } else {
+                elements.todayEventsList.classList.remove('two-column');
+            }
+
+            let upcomingHtml = '';
             if (upcoming.length > 0) {
-                if (happeningNow.length > 0) {
-                    html += `<div class="section-header muted">Coming Up</div>`;
-                }
                 upcoming.forEach((event) => {
                     const globalIndex = events.indexOf(event);
                     const isActive = globalIndex === activeIndex;
-                    html += `
+                    upcomingHtml += `
                         <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
                             <div class="event-name">${event.DisplayName || event.EventName}</div>
                             <div class="event-meta">
@@ -1063,9 +1097,10 @@
                         </div>
                     `;
                 });
+            } else {
+                upcomingHtml = '<div class="no-events-message">No upcoming events</div>';
             }
-
-            elements.eventsList.innerHTML = html;
+            elements.todayEventsList.innerHTML = upcomingHtml;
 
             // Scroll to center the active card (only if list is taller than container)
             setTimeout(scrollToActiveCard, 50);
