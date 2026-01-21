@@ -81,55 +81,18 @@
 
         .container {
             display: flex;
-            flex-direction: column;
             height: 100vh;
-            padding: 2rem;
+            padding: 1.5rem;
+            gap: 1.5rem;
         }
 
-        /* Header */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--blue-tint-38);
-            margin-bottom: 2rem;
-        }
-
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logo {
-            height: 50px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .datetime-section {
-            text-align: right;
-        }
-
-        .current-time {
-            font-size: 3rem;
-            font-weight: 300;
-            letter-spacing: -0.02em;
-        }
-
-        .current-date {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-top: 0.25rem;
-        }
-
-        /* Main Content */
+        /* Main Content - full height layout */
         .main-content {
             flex: 1;
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
             overflow: hidden;
+            height: 100%;
         }
 
         /* Slide View (single event spotlight) */
@@ -145,6 +108,53 @@
             position: relative;
             overflow: hidden;
             box-shadow: var(--card-shadow);
+        }
+
+        /* Corner elements inside slide view */
+        .slide-corner-logo {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .slide-corner-logo .logo {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .slide-corner-logo .room-filter-badge {
+            display: inline-block;
+            background: var(--blue-tint-38);
+            color: var(--text-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .slide-corner-clock {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 10;
+            text-align: right;
+        }
+
+        .slide-corner-clock .current-time {
+            font-size: 2rem;
+            font-weight: 300;
+            letter-spacing: -0.02em;
+        }
+
+        .slide-corner-clock .current-date {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.15rem;
         }
 
 
@@ -181,8 +191,9 @@
             color: white;
             padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            font-size: 1.2rem;
-            font-weight: 500;
+            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 400;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             height: 3rem;
@@ -199,11 +210,11 @@
         }
 
         .slide-title {
-            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             font-size: clamp(3rem, 6vw, 5rem);
-            font-weight: 400;
+            font-weight: 600;
             line-height: 1.15;
-            letter-spacing: 0.02em;
+            letter-spacing: 0.01em;
             max-width: 85%;
             min-height: 6rem;
             display: flex;
@@ -310,34 +321,50 @@
             margin-top: 0.6rem;
         }
 
-        /* Upcoming Events Sidebar */
-        .upcoming-section {
-            flex: 1;
+        /* Events Sidebar - Full Height */
+        .events-sidebar {
+            flex: 0 0 380px;
             display: flex;
             flex-direction: column;
-            min-width: 350px;
+            gap: 1.5rem;
             overflow: hidden;
+            height: 100%;
+        }
+
+        /* Happening Now Section */
+        .happening-now-section {
+            background: var(--background-card);
+            border-radius: 20px;
+            padding: 1.25rem;
+            flex-shrink: 0;
+            box-shadow: var(--card-shadow);
         }
 
         .section-title {
-            font-size: 1.25rem;
-            font-weight: 600;
+            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 400;
             margin-bottom: 1rem;
-            color: var(--text-secondary);
+            color: var(--text-primary);
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.05em;
             flex-shrink: 0;
         }
 
-        .room-filter-badge {
-            display: inline-block;
-            background: var(--blue-tint-38);
-            color: var(--text-primary);
-            padding: 0.25rem 0.75rem;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-left: 1rem;
+        .section-title.muted {
+            color: var(--text-secondary);
+        }
+
+        /* Today's Events Section */
+        .todays-events-section {
+            background: var(--background-card);
+            border-radius: 20px;
+            padding: 1.25rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
         }
 
         .events-list-wrapper {
@@ -353,11 +380,22 @@
             transition: transform 0.5s ease;
         }
 
+        .happening-now-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .no-events-message {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            padding: 0.5rem 0;
+        }
+
         .event-card {
-            background: var(--background-card);
-            border-radius: 16px;
+            background: var(--blue-tint-18);
+            border-radius: 12px;
             padding: 1rem;
-            box-shadow: var(--card-shadow);
             transition: all 0.3s ease;
             border-left: 4px solid var(--primary-color);
             flex-shrink: 0;
@@ -473,19 +511,16 @@
                 flex-direction: column;
             }
 
-            .upcoming-section {
-                min-width: unset;
-            }
-
-            .events-list {
+            .events-sidebar {
+                flex: 0 0 auto;
                 flex-direction: row;
-                flex-wrap: nowrap;
-                overflow-x: auto;
+                height: auto;
+                max-height: 40vh;
             }
 
-            .event-card {
-                flex: 0 0 280px;
-                min-width: 280px;
+            .happening-now-section,
+            .todays-events-section {
+                flex: 1;
             }
         }
 
@@ -506,30 +541,33 @@
                 font-size: 4rem;
             }
 
-            .current-time {
-                font-size: 2rem;
+            .slide-corner-clock .current-time {
+                font-size: 1.5rem;
+            }
+
+            .events-sidebar {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo-section">
-                <img src="logo.png" alt="Northwoods Community Church" class="logo">
-                <span class="room-filter-badge" id="roomFilterBadge" style="display: none;"></span>
-            </div>
-            <div class="datetime-section">
-                <div class="current-time" id="currentTime">--:--</div>
-                <div class="current-date" id="currentDate">Loading...</div>
-            </div>
-        </header>
-
-        <!-- Main Content -->
+        <!-- Main Content - Full Height -->
         <main class="main-content">
             <!-- Featured Event Slide -->
             <section class="slide-view" id="slideView">
+                <!-- Corner Logo -->
+                <div class="slide-corner-logo">
+                    <img src="logo.png" alt="Northwoods Community Church" class="logo">
+                    <span class="room-filter-badge" id="roomFilterBadge" style="display: none;"></span>
+                </div>
+                <!-- Corner Clock -->
+                <div class="slide-corner-clock">
+                    <div class="current-time" id="currentTime">--:--</div>
+                    <div class="current-date" id="currentDate">Loading...</div>
+                </div>
+
                 <div class="loading" id="loadingState">
                     <div class="loading-spinner"></div>
                 </div>
@@ -548,12 +586,23 @@
                 </div>
             </section>
 
-            <!-- Today's Events -->
-            <aside class="upcoming-section">
-                <h2 class="section-title">Today's Events</h2>
-                <div class="events-list-wrapper">
-                    <div class="events-list" id="eventsList">
-                        <!-- Events will be populated here -->
+            <!-- Events Sidebar -->
+            <aside class="events-sidebar">
+                <!-- Happening Now Section -->
+                <div class="happening-now-section">
+                    <h2 class="section-title">Happening Now</h2>
+                    <div class="happening-now-list" id="happeningNowList">
+                        <!-- Current events will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Today's Events Section -->
+                <div class="todays-events-section">
+                    <h2 class="section-title muted">Today's Events</h2>
+                    <div class="events-list-wrapper">
+                        <div class="events-list" id="eventsList">
+                            <!-- All events will be populated here -->
+                        </div>
                     </div>
                 </div>
             </aside>
@@ -615,6 +664,7 @@
             slideLocation: document.getElementById('slideLocation'),
             slideTime: document.getElementById('slideTime'),
             slideDescription: document.getElementById('slideDescription'),
+            happeningNowList: document.getElementById('happeningNowList'),
             eventsList: document.getElementById('eventsList')
         };
 
@@ -766,11 +816,12 @@
                 elements.slideContent.style.opacity = '1';
             }, 300);
 
-            // Show "No more events" in sidebar when showing welcome slides
+            // Show "No events" in sidebar when showing welcome slides
+            elements.happeningNowList.innerHTML = `
+                <div class="no-events-message">No events right now</div>
+            `;
             elements.eventsList.innerHTML = `
-                <div class="event-card info">
-                    <div class="event-name">No more events</div>
-                </div>
+                <div class="no-events-message">No events scheduled</div>
             `;
         }
 
@@ -850,23 +901,53 @@
             }, 300);
         }
 
-        // Render upcoming events list
+        // Render events sidebar (Happening Now + Today's Events)
         function renderUpcomingEvents() {
+            const now = new Date();
+
+            // Split events into happening now vs upcoming
+            const happeningNow = events.filter(e =>
+                e.startDate <= now && e.endDate >= now && !e.IsAnnouncement
+            );
+            const upcomingEvents = events.filter(e =>
+                e.startDate > now || e.IsAnnouncement
+            );
+
+            // Render Happening Now section
+            if (happeningNow.length === 0) {
+                elements.happeningNowList.innerHTML = `
+                    <div class="no-events-message">No events right now</div>
+                `;
+            } else {
+                let happeningHtml = '';
+                happeningNow.forEach((event) => {
+                    happeningHtml += `
+                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''}">
+                            <div class="event-name">${event.DisplayName || event.EventName}</div>
+                            <div class="event-meta">
+                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
+                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                elements.happeningNowList.innerHTML = happeningHtml;
+            }
+
+            // Render Today's Events section (all events for full list view)
             if (events.length === 0) {
-                return; // Welcome slides handles sidebar
+                elements.eventsList.innerHTML = `
+                    <div class="no-events-message">No events scheduled</div>
+                `;
+                return;
             }
 
             const activeIndex = currentSlideIndex % events.length;
-
-            // Build a looping list: events from activeIndex to end, then divider, then events from start
-            const eventsAfter = events.slice(activeIndex);
-            const eventsBefore = events.slice(0, activeIndex);
-
             let html = '';
 
-            // Render events from active to end
-            eventsAfter.forEach((event, i) => {
-                const isActive = i === 0;
+            events.forEach((event, i) => {
+                const isActive = i === activeIndex;
+                const isNow = event.startDate <= now && event.endDate >= now;
                 html += `
                     <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
                         <div class="event-name">${event.DisplayName || event.EventName}</div>
@@ -878,27 +959,6 @@
                     </div>
                 `;
             });
-
-            // Add divider and remaining events if we have events before the active one
-            if (eventsBefore.length > 0) {
-                html += `
-                    <div class="events-divider">
-                        <span>Up Next</span>
-                    </div>
-                `;
-
-                eventsBefore.forEach((event) => {
-                    html += `
-                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''}">
-                            <div class="event-name">${event.DisplayName || event.EventName}</div>
-                            <div class="event-meta">
-                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
-                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
 
             elements.eventsList.innerHTML = html;
 
