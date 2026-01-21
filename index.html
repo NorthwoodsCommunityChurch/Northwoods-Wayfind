@@ -376,6 +376,16 @@
             position: relative;
         }
 
+        /* Enable scrolling when needed */
+        .events-scroll-container.scrollable {
+            overflow-y: auto;
+        }
+
+        /* Hide scrollbar but keep functionality */
+        .events-scroll-container.scrollable::-webkit-scrollbar {
+            display: none;
+        }
+
         .events-list {
             display: flex;
             flex-direction: column;
@@ -498,6 +508,11 @@
         .events-list.fill-height .event-card {
             height: 100%;
             min-height: 0;
+        }
+
+        /* In scroll mode, cards have fixed height matching 3-row sizing */
+        .events-list.scroll-mode .event-card {
+            flex-shrink: 0;
         }
 
         .event-card.active {
@@ -905,36 +920,28 @@
 
                 // Only scroll if count meets threshold
                 if (count < SCROLL_THRESHOLD) {
-                    list.style.transform = 'translateY(0)';
+                    wrapper.scrollTop = 0;
                     return;
                 }
 
                 const activeCard = list.querySelector('.event-card.active');
-                const wrapperHeight = wrapper.offsetHeight;
-                const listHeight = list.offsetHeight;
-
-                // If list fits without scrolling, don't scroll
-                if (listHeight <= wrapperHeight) {
-                    list.style.transform = 'translateY(0)';
-                    return;
-                }
-
                 if (!activeCard) {
-                    list.style.transform = 'translateY(0)';
+                    wrapper.scrollTop = 0;
                     return;
                 }
 
+                const wrapperHeight = wrapper.offsetHeight;
                 const cardTop = activeCard.offsetTop;
                 const cardHeight = activeCard.offsetHeight;
 
                 // Calculate scroll position to center the active card
                 const scrollTarget = cardTop - (wrapperHeight / 2) + (cardHeight / 2);
 
-                // Clamp scroll to valid range
-                const maxScroll = listHeight - wrapperHeight;
-                const clampedScroll = Math.max(0, Math.min(scrollTarget, maxScroll));
-
-                list.style.transform = `translateY(-${clampedScroll}px)`;
+                // Smooth scroll to position
+                wrapper.scrollTo({
+                    top: Math.max(0, scrollTarget),
+                    behavior: 'smooth'
+                });
             });
         }
 
@@ -1106,6 +1113,12 @@
             // Determine if we should fill height (when below scroll threshold)
             const shouldFillHappening = happeningNow.length > 0 && happeningNow.length < SCROLL_THRESHOLD;
             const shouldFillUpcoming = upcoming.length > 0 && upcoming.length < SCROLL_THRESHOLD;
+            const shouldScrollHappening = happeningNow.length >= SCROLL_THRESHOLD;
+            const shouldScrollUpcoming = upcoming.length >= SCROLL_THRESHOLD;
+
+            // Get scroll containers
+            const happeningScrollContainer = elements.happeningNowBox.querySelector('.events-scroll-container');
+            const upcomingScrollContainer = elements.todayEventsBox.querySelector('.events-scroll-container');
 
             if (happeningNow.length > 0) {
                 if (useTwoColumnsHappening) {
@@ -1114,11 +1127,18 @@
                     elements.happeningNowList.classList.remove('two-column');
                 }
 
-                // Add fill-height class when not scrolling
+                // Add fill-height class when not scrolling, scroll-mode when scrolling
                 if (shouldFillHappening) {
                     elements.happeningNowList.classList.add('fill-height');
-                } else {
+                    elements.happeningNowList.classList.remove('scroll-mode');
+                    happeningScrollContainer.classList.remove('scrollable');
+                } else if (shouldScrollHappening) {
                     elements.happeningNowList.classList.remove('fill-height');
+                    elements.happeningNowList.classList.add('scroll-mode');
+                    happeningScrollContainer.classList.add('scrollable');
+                } else {
+                    elements.happeningNowList.classList.remove('fill-height', 'scroll-mode');
+                    happeningScrollContainer.classList.remove('scrollable');
                 }
 
                 let happeningHtml = '';
@@ -1138,7 +1158,8 @@
                 });
                 elements.happeningNowList.innerHTML = happeningHtml;
             } else {
-                elements.happeningNowList.classList.remove('two-column', 'fill-height');
+                elements.happeningNowList.classList.remove('two-column', 'fill-height', 'scroll-mode');
+                happeningScrollContainer.classList.remove('scrollable');
                 elements.happeningNowList.innerHTML = '<div class="no-events-message">No events currently happening</div>';
             }
 
@@ -1149,11 +1170,18 @@
                 elements.todayEventsList.classList.remove('two-column');
             }
 
-            // Add fill-height class when not scrolling
+            // Add fill-height class when not scrolling, scroll-mode when scrolling
             if (shouldFillUpcoming) {
                 elements.todayEventsList.classList.add('fill-height');
-            } else {
+                elements.todayEventsList.classList.remove('scroll-mode');
+                upcomingScrollContainer.classList.remove('scrollable');
+            } else if (shouldScrollUpcoming) {
                 elements.todayEventsList.classList.remove('fill-height');
+                elements.todayEventsList.classList.add('scroll-mode');
+                upcomingScrollContainer.classList.add('scrollable');
+            } else {
+                elements.todayEventsList.classList.remove('fill-height', 'scroll-mode');
+                upcomingScrollContainer.classList.remove('scrollable');
             }
 
             let upcomingHtml = '';
@@ -1173,7 +1201,8 @@
                     `;
                 });
             } else {
-                elements.todayEventsList.classList.remove('fill-height');
+                elements.todayEventsList.classList.remove('fill-height', 'scroll-mode');
+                upcomingScrollContainer.classList.remove('scrollable');
                 upcomingHtml = '<div class="no-events-message">No upcoming events</div>';
             }
             elements.todayEventsList.innerHTML = upcomingHtml;
