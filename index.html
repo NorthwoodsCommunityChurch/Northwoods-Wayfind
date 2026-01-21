@@ -321,73 +321,66 @@
             margin-top: 0.6rem;
         }
 
-        /* Events Sidebar - Full Height */
+        /* Events Sidebar - Single unified container */
         .events-sidebar {
             flex: 0 0 380px;
+            background: var(--background-card);
+            border-radius: 20px;
+            padding: 1.25rem;
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
             overflow: hidden;
             height: 100%;
-        }
-
-        /* Happening Now Section */
-        .happening-now-section {
-            background: var(--background-card);
-            border-radius: 20px;
-            padding: 1.25rem;
-            flex-shrink: 0;
             box-shadow: var(--card-shadow);
         }
 
-        .section-title {
-            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 400;
-            margin-bottom: 1rem;
-            color: var(--text-primary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
-        }
-
-        .section-title.muted {
-            color: var(--text-secondary);
-        }
-
-        /* Today's Events Section */
-        .todays-events-section {
-            background: var(--background-card);
-            border-radius: 20px;
-            padding: 1.25rem;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            box-shadow: var(--card-shadow);
-        }
-
-        .events-list-wrapper {
+        /* Unified events container that scrolls as one */
+        .events-scroll-container {
             flex: 1;
             overflow: hidden;
             position: relative;
         }
 
-        .events-list {
+        .events-unified-list {
             display: flex;
             flex-direction: column;
             gap: 0.75rem;
             transition: transform 0.5s ease;
         }
 
-        .happening-now-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
+        /* Section headers within the unified list */
+        .section-header {
+            font-family: 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.5rem 0;
+            margin-top: 0.5rem;
+        }
+
+        .section-header:first-child {
+            margin-top: 0;
+        }
+
+        .section-header.muted {
+            color: var(--text-secondary);
+        }
+
+        .section-title {
+            font-family: 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            flex-shrink: 0;
         }
 
         .no-events-message {
-            color: var(--text-secondary);
+            color: var(--text-primary);
             font-size: 1rem;
             padding: 0.5rem 0;
         }
@@ -469,7 +462,8 @@
             flex-direction: column;
             gap: 0.15rem;
             font-size: 0.85rem;
-            color: var(--text-secondary);
+            color: var(--text-primary);
+            opacity: 0.85;
         }
 
         .event-time {
@@ -513,14 +507,7 @@
 
             .events-sidebar {
                 flex: 0 0 auto;
-                flex-direction: row;
-                height: auto;
-                max-height: 40vh;
-            }
-
-            .happening-now-section,
-            .todays-events-section {
-                flex: 1;
+                max-height: 35vh;
             }
         }
 
@@ -543,10 +530,6 @@
 
             .slide-corner-clock .current-time {
                 font-size: 1.5rem;
-            }
-
-            .events-sidebar {
-                flex-direction: column;
             }
         }
     </style>
@@ -586,23 +569,12 @@
                 </div>
             </section>
 
-            <!-- Events Sidebar -->
+            <!-- Events Sidebar - Unified scrolling list -->
             <aside class="events-sidebar">
-                <!-- Happening Now Section -->
-                <div class="happening-now-section">
-                    <h2 class="section-title">Happening Now</h2>
-                    <div class="happening-now-list" id="happeningNowList">
-                        <!-- Current events will be populated here -->
-                    </div>
-                </div>
-
-                <!-- Today's Events Section -->
-                <div class="todays-events-section">
-                    <h2 class="section-title muted">Today's Events</h2>
-                    <div class="events-list-wrapper">
-                        <div class="events-list" id="eventsList">
-                            <!-- All events will be populated here -->
-                        </div>
+                <h2 class="section-title">Today's Events</h2>
+                <div class="events-scroll-container">
+                    <div class="events-unified-list" id="eventsList">
+                        <!-- Events will be populated here with section headers -->
                     </div>
                 </div>
             </aside>
@@ -664,7 +636,6 @@
             slideLocation: document.getElementById('slideLocation'),
             slideTime: document.getElementById('slideTime'),
             slideDescription: document.getElementById('slideDescription'),
-            happeningNowList: document.getElementById('happeningNowList'),
             eventsList: document.getElementById('eventsList')
         };
 
@@ -768,21 +739,34 @@
             }
         }
 
-        // Scroll the events list to center the active card
+        // Scroll the events list to show the active card
         function scrollToActiveCard() {
-            const wrapper = document.querySelector('.events-list-wrapper');
+            const wrapper = document.querySelector('.events-scroll-container');
             const activeCard = document.querySelector('.event-card.active');
+            const list = elements.eventsList;
 
-            if (!wrapper || !activeCard) return;
+            if (!wrapper || !activeCard || !list) return;
 
             const wrapperHeight = wrapper.offsetHeight;
+            const listHeight = list.offsetHeight;
+
+            // If list fits without scrolling, don't scroll
+            if (listHeight <= wrapperHeight) {
+                list.style.transform = 'translateY(0)';
+                return;
+            }
+
             const cardTop = activeCard.offsetTop;
             const cardHeight = activeCard.offsetHeight;
 
             // Calculate scroll position to center the active card
             const scrollTarget = cardTop - (wrapperHeight / 2) + (cardHeight / 2);
 
-            elements.eventsList.style.transform = `translateY(-${Math.max(0, scrollTarget)}px)`;
+            // Clamp scroll to valid range
+            const maxScroll = listHeight - wrapperHeight;
+            const clampedScroll = Math.max(0, Math.min(scrollTarget, maxScroll));
+
+            list.style.transform = `translateY(-${clampedScroll}px)`;
         }
 
         // Render welcome slide
@@ -817,9 +801,6 @@
             }, 300);
 
             // Show "No events" in sidebar when showing welcome slides
-            elements.happeningNowList.innerHTML = `
-                <div class="no-events-message">No events right now</div>
-            `;
             elements.eventsList.innerHTML = `
                 <div class="no-events-message">No events scheduled</div>
             `;
@@ -901,40 +882,8 @@
             }, 300);
         }
 
-        // Render events sidebar (Happening Now + Today's Events)
+        // Render events sidebar as unified list with section headers
         function renderUpcomingEvents() {
-            const now = new Date();
-
-            // Split events into happening now vs upcoming
-            const happeningNow = events.filter(e =>
-                e.startDate <= now && e.endDate >= now && !e.IsAnnouncement
-            );
-            const upcomingEvents = events.filter(e =>
-                e.startDate > now || e.IsAnnouncement
-            );
-
-            // Render Happening Now section
-            if (happeningNow.length === 0) {
-                elements.happeningNowList.innerHTML = `
-                    <div class="no-events-message">No events right now</div>
-                `;
-            } else {
-                let happeningHtml = '';
-                happeningNow.forEach((event) => {
-                    happeningHtml += `
-                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''}">
-                            <div class="event-name">${event.DisplayName || event.EventName}</div>
-                            <div class="event-meta">
-                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
-                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-                elements.happeningNowList.innerHTML = happeningHtml;
-            }
-
-            // Render Today's Events section (all events for full list view)
             if (events.length === 0) {
                 elements.eventsList.innerHTML = `
                     <div class="no-events-message">No events scheduled</div>
@@ -942,27 +891,62 @@
                 return;
             }
 
+            const now = new Date();
             const activeIndex = currentSlideIndex % events.length;
+
+            // Split events into happening now vs upcoming
+            const happeningNow = events.filter(e =>
+                e.startDate <= now && e.endDate >= now && !e.IsAnnouncement
+            );
+            const upcoming = events.filter(e =>
+                (e.startDate > now || e.IsAnnouncement)
+            );
+
             let html = '';
 
-            events.forEach((event, i) => {
-                const isActive = i === activeIndex;
-                const isNow = event.startDate <= now && event.endDate >= now;
-                html += `
-                    <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
-                        <div class="event-name">${event.DisplayName || event.EventName}</div>
-                        <div class="event-meta">
-                            <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
-                            ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+            // Happening Now section (if any)
+            if (happeningNow.length > 0) {
+                html += `<div class="section-header">Happening Now</div>`;
+                happeningNow.forEach((event) => {
+                    const globalIndex = events.indexOf(event);
+                    const isActive = globalIndex === activeIndex;
+                    html += `
+                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
+                            <div class="event-name">${event.DisplayName || event.EventName}</div>
+                            <div class="event-meta">
+                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
+                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+                            </div>
+                            ${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}
                         </div>
-                        ${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
+
+            // Upcoming section (if any)
+            if (upcoming.length > 0) {
+                if (happeningNow.length > 0) {
+                    html += `<div class="section-header muted">Coming Up</div>`;
+                }
+                upcoming.forEach((event) => {
+                    const globalIndex = events.indexOf(event);
+                    const isActive = globalIndex === activeIndex;
+                    html += `
+                        <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
+                            <div class="event-name">${event.DisplayName || event.EventName}</div>
+                            <div class="event-meta">
+                                <div class="event-time">${event.EventTimeDisplay || formatTime(event.startDate)}</div>
+                                ${event.SpacesToDisplay ? `<div class="event-location">${event.SpacesToDisplay}</div>` : ''}
+                            </div>
+                            ${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}
+                        </div>
+                    `;
+                });
+            }
 
             elements.eventsList.innerHTML = html;
 
-            // Scroll to center the active card
+            // Scroll to center the active card (only if list is taller than container)
             setTimeout(scrollToActiveCard, 50);
         }
 
