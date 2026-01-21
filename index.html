@@ -384,14 +384,12 @@
             height: 100%;
         }
 
-        /* When not scrolling, cards fill available space */
+        /* Fill height mode - cards stretch uniformly to fill space */
         .events-list.fill-height {
-            justify-content: stretch;
-        }
-
-        .events-list.fill-height .event-card {
-            flex: 1;
-            min-height: 0;
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-auto-rows: 1fr;
+            gap: 0.7rem;
         }
 
         /* Two-column grid layout */
@@ -401,6 +399,7 @@
             gap: 0.7rem;
         }
 
+        /* Two-column with fill height - equal height rows */
         .events-list.two-column.fill-height {
             grid-auto-rows: 1fr;
         }
@@ -488,6 +487,15 @@
             flex-shrink: 0;
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* In fill-height mode, cards stretch to fill their grid cell */
+        .events-list.fill-height .event-card {
+            height: 100%;
+            min-height: 0;
         }
 
         .event-card.active {
