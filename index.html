@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Signage - Northwoods Community Church</title>
-    <!-- Brand fonts: Myriad Pro (commercial) with system fallbacks -->
+    <!-- Brand fonts: Red Rock display font + Myriad Pro with system fallbacks -->
     <style>
+        @font-face {
+            font-family: 'Red Rock';
+            src: url('RedRock.otf') format('opentype');
+            font-weight: 400;
+            font-style: normal;
+        }
         @font-face {
             font-family: 'Myriad Pro';
             src: local('Myriad Pro'), local('MyriadPro-Regular');
@@ -60,6 +66,7 @@
             --text-primary: #ffffff;
             --text-secondary: rgba(255, 255, 255, 0.8);
             --accent-gradient: linear-gradient(135deg, #004C97 0%, #009CDE 100%);
+            --accent-gradient-reversed: linear-gradient(135deg, #009CDE 0%, #004C97 100%);
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
         }
 
@@ -172,14 +179,14 @@
             display: inline-block;
             background: var(--accent-gradient);
             color: white;
-            padding: 0.5rem 1.25rem;
+            padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            font-size: 1rem;
+            font-size: 1.2rem;
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            height: 2.5rem;
-            line-height: 1.5rem;
+            height: 3rem;
+            line-height: 1.8rem;
         }
 
         .slide-label.happening-now {
@@ -192,12 +199,13 @@
         }
 
         .slide-title {
-            font-size: clamp(2.5rem, 5vw, 4rem);
-            font-weight: 700;
+            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: clamp(3rem, 6vw, 5rem);
+            font-weight: 400;
             line-height: 1.15;
-            letter-spacing: -0.02em;
+            letter-spacing: 0.02em;
             max-width: 85%;
-            min-height: 5rem;
+            min-height: 6rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -207,15 +215,15 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.75rem;
-            font-size: clamp(1.5rem, 3vw, 2.25rem);
-            height: 3rem;
+            gap: 1rem;
+            font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+            height: 3.5rem;
         }
 
         .slide-time-icon {
             flex-shrink: 0;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             color: var(--primary-light);
         }
 
@@ -229,39 +237,39 @@
             flex-direction: column;
             align-items: center;
             max-width: 85%;
-            min-height: 4rem;
+            min-height: 5rem;
             background: var(--blue-tint-18);
             border: 1px solid var(--blue-tint-38);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
         }
 
         .slide-location-label {
-            font-size: 0.75rem;
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 0.1em;
             color: var(--text-primary);
             font-weight: 600;
             background: var(--blue-tint-38);
-            padding: 0.35rem 1rem;
+            padding: 0.45rem 1.25rem;
             width: 100%;
             text-align: center;
         }
 
         .slide-location-box {
-            padding: 0.75rem 1.5rem;
-            font-size: clamp(1.1rem, 2vw, 1.4rem);
+            padding: 1rem 2rem;
+            font-size: clamp(1.3rem, 2.5vw, 1.75rem);
             color: var(--text-primary);
             text-align: center;
             line-height: 1.4;
         }
 
         .slide-description {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
             color: var(--text-secondary);
             line-height: 1.5;
-            max-width: 600px;
-            min-height: 2rem;
+            max-width: 700px;
+            min-height: 2.5rem;
         }
 
         /* Welcome Slide Styles */
@@ -276,31 +284,30 @@
         }
 
         .welcome-slide .welcome-title {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-family: 'Red Rock', 'Myriad Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 5rem;
+            font-weight: 400;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+            letter-spacing: 0.02em;
         }
 
         .welcome-slide .welcome-subtitle {
-            font-size: 1.75rem;
+            font-size: 2.1rem;
             color: var(--text-secondary);
-            max-width: 600px;
+            max-width: 700px;
         }
 
         .welcome-slide .welcome-time {
-            font-size: 6rem;
+            font-size: 7.5rem;
             font-weight: 200;
             color: var(--text-primary);
         }
 
         .welcome-slide .welcome-date {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             color: var(--text-secondary);
-            margin-top: 0.5rem;
+            margin-top: 0.6rem;
         }
 
         /* Upcoming Events Sidebar */
@@ -541,9 +548,9 @@
                 </div>
             </section>
 
-            <!-- Upcoming Events -->
+            <!-- Today's Events -->
             <aside class="upcoming-section">
-                <h2 class="section-title">Upcoming Events</h2>
+                <h2 class="section-title">Today's Events</h2>
                 <div class="events-list-wrapper">
                     <div class="events-list" id="eventsList">
                         <!-- Events will be populated here -->
@@ -574,7 +581,7 @@
             {
                 type: 'welcome',
                 title: 'Welcome to Northwoods',
-                subtitle: 'hope lives here'
+                subtitle: ''
             },
             {
                 type: 'info',
@@ -759,36 +766,12 @@
                 elements.slideContent.style.opacity = '1';
             }, 300);
 
-            // Render all welcome slides in sidebar with current one highlighted
-            elements.eventsList.innerHTML = WELCOME_SLIDES.map((s, index) => {
-                const isActive = index === slideIndex;
-                let content = '';
-                if (s.type === 'time') {
-                    content = `
-                        <div class="event-name">Current Time</div>
-                        <div class="event-meta">
-                            <div class="event-time">${formatTime(now)}</div>
-                        </div>
-                    `;
-                } else if (s.type === 'info') {
-                    content = `
-                        <div class="event-name">Information</div>
-                        <div class="event-meta">
-                            <div class="event-location">Visit the info desk</div>
-                        </div>
-                    `;
-                } else {
-                    content = `
-                        <div class="event-name">Welcome</div>
-                        <div class="event-meta">
-                            <div class="event-location">hope lives here</div>
-                        </div>
-                    `;
-                }
-                return `<div class="event-card info ${isActive ? 'active' : ''}">${content}${isActive ? '<div class="card-progress" id="cardProgress"></div>' : ''}</div>`;
-            }).join('');
-
-            setTimeout(scrollToActiveCard, 50);
+            // Show "No more events" in sidebar when showing welcome slides
+            elements.eventsList.innerHTML = `
+                <div class="event-card info">
+                    <div class="event-name">No more events</div>
+                </div>
+            `;
         }
 
         // Render the featured slide

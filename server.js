@@ -31,10 +31,14 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    // Parse URL to separate pathname from query string
+    const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
+    const pathname = parsedUrl.pathname;
+
+    console.log(`${new Date().toISOString()} - ${req.method} ${pathname}`);
 
     // API proxy endpoint
-    if (req.url === '/api/events') {
+    if (pathname === '/api/events') {
         https.get(API_URL, (apiRes) => {
             let data = '';
             apiRes.on('data', chunk => data += chunk);
@@ -53,8 +57,8 @@ const server = http.createServer((req, res) => {
         return;
     }
 
-    // Serve static files
-    let filePath = req.url === '/' ? '/index.html' : req.url;
+    // Serve static files (use pathname, ignoring query string)
+    let filePath = pathname === '/' ? '/index.html' : pathname;
     filePath = path.join(__dirname, filePath);
 
     const ext = path.extname(filePath);
