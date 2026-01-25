@@ -918,7 +918,7 @@
                 // Filter out hidden events, excluded events, apply room filter, and sort by start time
                 events = data
                     .filter(e => !e.IsHiddenFromDisplay)
-                    .filter(e => !isExcludedEvent(e))
+                    // .filter(e => !isExcludedEvent(e))  // Exclusion filter disabled
                     .map(e => ({
                         ...e,
                         startDate: parseNetDate(e.EventStart),
