@@ -909,6 +909,19 @@
             return spaces.includes(ROOM_FILTER.toLowerCase());
         }
 
+        // Get events that should be displayed (happening now + upcoming, excludes ended)
+        function getDisplayableEvents() {
+            const now = new Date();
+            return events.filter(e =>
+                // Happening now: started and not ended
+                (e.startDate <= now && e.endDate >= now) ||
+                // Upcoming: not started yet
+                (e.startDate > now) ||
+                // Announcements always show
+                e.IsAnnouncement
+            );
+        }
+
         // Fetch events from API
         async function fetchEvents() {
             try {
@@ -1020,14 +1033,16 @@
 
         // Render the featured slide
         function renderSlide() {
-            if (events.length === 0) {
+            const displayableEvents = getDisplayableEvents();
+
+            if (displayableEvents.length === 0) {
                 renderWelcomeSlide();
                 return;
             }
 
             isShowingWelcome = false;
-            const eventIndex = currentSlideIndex % events.length;
-            const event = events[eventIndex];
+            const eventIndex = currentSlideIndex % displayableEvents.length;
+            const event = displayableEvents[eventIndex];
 
             // Fade out content
             elements.slideContent.style.opacity = '0';
@@ -1121,7 +1136,9 @@
             }
 
             const now = new Date();
-            const activeIndex = currentSlideIndex % events.length;
+            const displayableEvents = getDisplayableEvents();
+            const activeIndex = displayableEvents.length > 0 ? currentSlideIndex % displayableEvents.length : -1;
+            const activeEvent = activeIndex >= 0 ? displayableEvents[activeIndex] : null;
 
             // Split events into happening now vs upcoming
             const happeningNow = events.filter(e =>
@@ -1184,8 +1201,7 @@
 
                 let happeningHtml = '';
                 happeningNow.forEach((event) => {
-                    const globalIndex = events.indexOf(event);
-                    const isActive = globalIndex === activeIndex;
+                    const isActive = activeEvent && event === activeEvent;
                     happeningHtml += `
                         <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
                             <div class="event-name">${event.DisplayName || event.EventName}</div>
@@ -1234,8 +1250,7 @@
             let upcomingHtml = '';
             if (upcoming.length > 0) {
                 upcoming.forEach((event) => {
-                    const globalIndex = events.indexOf(event);
-                    const isActive = globalIndex === activeIndex;
+                    const isActive = activeEvent && event === activeEvent;
                     upcomingHtml += `
                         <div class="event-card ${event.IsAnnouncement ? 'announcement' : ''} ${isActive ? 'active' : ''}">
                             <div class="event-name">${event.DisplayName || event.EventName}</div>
