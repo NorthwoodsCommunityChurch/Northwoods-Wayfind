@@ -750,6 +750,24 @@
             refreshInterval: 600000, // 10 minutes
         };
 
+        // ============================================
+        // EXCLUSION LIST - Events to hide from display
+        // Add event names here (case-insensitive, partial match)
+        // ============================================
+        const EXCLUDED_EVENTS = [
+            '2nd grade',
+            '3rd-5th grade',
+            'Birth-1st grade',
+        ];
+
+        // Check if event should be excluded
+        function isExcludedEvent(event) {
+            const eventName = (event.DisplayName || event.EventName || '').toLowerCase();
+            return EXCLUDED_EVENTS.some(excluded =>
+                eventName.includes(excluded.toLowerCase())
+            );
+        }
+
         // Get room filter from URL parameter (e.g., ?room=Auditorium)
         function getRoomFilter() {
             const params = new URLSearchParams(window.location.search);
@@ -897,9 +915,10 @@
                 const response = await fetch(CONFIG.apiUrl);
                 const data = await response.json();
 
-                // Filter out hidden events, apply room filter, and sort by start time
+                // Filter out hidden events, excluded events, apply room filter, and sort by start time
                 events = data
                     .filter(e => !e.IsHiddenFromDisplay)
+                    .filter(e => !isExcludedEvent(e))
                     .map(e => ({
                         ...e,
                         startDate: parseNetDate(e.EventStart),
