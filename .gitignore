@@ -2,6 +2,10 @@
 .DS_Store
 *.app/
 
+# Release archives (GitHub Releases only)
+*.zip
+*.dmg
+
 # Environment files
 .env
 .env.local

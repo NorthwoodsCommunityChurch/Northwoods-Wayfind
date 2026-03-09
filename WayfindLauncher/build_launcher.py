@@ -126,10 +126,7 @@ http.createServer((req, res) => {
     # Generate Swift code
     print("  Generating Swift code...")
     swift_code = f'''import Cocoa
-
-// MARK: - Configuration
-let GITHUB_RAW_BASE = "https://raw.githubusercontent.com/NorthwoodsCommunityChurch/Northwoods-Wayfind/refs/heads/main"
-let FILES_TO_SYNC = ["index.html"]
+import Sparkle
 
 // MARK: - Embedded Files (auto-generated)
 let INDEX_HTML = """
@@ -146,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {{
     var serverProcess: Process?
     var serverRunning = false
     var projectDir: String = ""
-    var lastUpdateCheck: Date?
+    let updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
     override init() {{
         super.init()
@@ -308,18 +305,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {{
         menu.addItem(NSMenuItem.separator())
 
         // Update section
-        let updateItem = NSMenuItem(title: "Check for Updates", action: #selector(checkForUpdates), keyEquivalent: "u")
-        updateItem.target = self
+        let updateItem = NSMenuItem(title: "Check for Updates...", action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)), keyEquivalent: "u")
+        updateItem.target = updaterController
         menu.addItem(updateItem)
-
-        if let lastCheck = lastUpdateCheck {{
-            let formatter = RelativeDateTimeFormatter()
-            formatter.unitsStyle = .abbreviated
-            let timeAgo = formatter.localizedString(for: lastCheck, relativeTo: Date())
-            let lastCheckItem = NSMenuItem(title: "  Last checked: \\(timeAgo)", action: nil, keyEquivalent: "")
-            lastCheckItem.isEnabled = false
-            menu.addItem(lastCheckItem)
-        }}
 
         menu.addItem(NSMenuItem.separator())
 
@@ -529,49 +517,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {{
         }}
     }}
 
-    @objc func checkForUpdates() {{
-        showNotification(title: "Checking for Updates", body: "Downloading latest files from GitHub...")
-
-        DispatchQueue.global(qos: .userInitiated).async {{
-            var updatedCount = 0
-
-            for fileName in FILES_TO_SYNC {{
-                let urlString = "\\(GITHUB_RAW_BASE)/\\(fileName)"
-                guard let url = URL(string: urlString) else {{ continue }}
-
-                do {{
-                    let newContent = try String(contentsOf: url, encoding: .utf8)
-                    let localPath = (self.projectDir as NSString).appendingPathComponent(fileName)
-
-                    // Check if file exists and compare
-                    let existingContent = try? String(contentsOfFile: localPath, encoding: .utf8)
-                    if existingContent != newContent {{
-                        try newContent.write(toFile: localPath, atomically: true, encoding: .utf8)
-                        updatedCount += 1
-                    }}
-                }} catch {{
-                    print("Failed to sync \\(fileName): \\(error)")
-                }}
-            }}
-
-            DispatchQueue.main.async {{
-                self.lastUpdateCheck = Date()
-                self.updateMenu()
-
-                if updatedCount > 0 {{
-                    self.showNotification(title: "Updates Applied", body: "Updated \\(updatedCount) file(s). Refreshing browser...")
-                    // Open browser with cache-busting parameter to force reload
-                    let timestamp = Int(Date().timeIntervalSince1970)
-                    if let url = URL(string: "http://localhost:8080?_cb=\\(timestamp)") {{
-                        NSWorkspace.shared.open(url)
-                    }}
-                }} else {{
-                    self.showNotification(title: "Already Up to Date", body: "No updates available")
-                }}
-            }}
-        }}
-    }}
-
     @objc func startServerAction() {{
         if projectDir.isEmpty && !selectProjectFolder() {{ return }}
         if !setupProjectFolder() {{ return }}
@@ -636,6 +581,18 @@ app.run()
     print("  Swift file generated successfully!")
     print(f"  File size: {os.path.getsize(swift_path):,} bytes")
 
+    # Sparkle framework location
+    SPARKLE_FRAMEWORK = os.path.expanduser(
+        "~/Library/CloudStorage/OneDrive-NorthwoodsCommunityChurch/VS Code/"
+        "Camera Positions/build/DerivedData/Build/Products/Release/Sparkle.framework"
+    )
+    SPARKLE_FRAMEWORK_DIR = os.path.dirname(SPARKLE_FRAMEWORK)
+
+    if not os.path.exists(SPARKLE_FRAMEWORK):
+        print(f"ERROR: Sparkle.framework not found at {SPARKLE_FRAMEWORK}")
+        print("Build Camera Positions first to get Sparkle.framework.")
+        sys.exit(1)
+
     # Compile
     print("\\nCompiling universal binary...")
     os.chdir(SCRIPT_DIR)
@@ -644,7 +601,9 @@ app.run()
     print("  Compiling for ARM64...")
     result = subprocess.run([
         'swiftc', '-o', 'WayfindLauncher-arm64', 'main.swift',
-        '-framework', 'Cocoa', '-target', 'arm64-apple-macos10.15'
+        '-framework', 'Cocoa', '-framework', 'Sparkle',
+        '-F', SPARKLE_FRAMEWORK_DIR,
+        '-target', 'arm64-apple-macos11.0'
     ], capture_output=True, text=True)
     if result.returncode != 0:
         print(f"ARM64 compile failed: {result.stderr}")
@@ -654,7 +613,9 @@ app.run()
     print("  Compiling for x86_64...")
     result = subprocess.run([
         'swiftc', '-o', 'WayfindLauncher-x86_64', 'main.swift',
-        '-framework', 'Cocoa', '-target', 'x86_64-apple-macos10.15'
+        '-framework', 'Cocoa', '-framework', 'Sparkle',
+        '-F', SPARKLE_FRAMEWORK_DIR,
+        '-target', 'x86_64-apple-macos11.0'
     ], capture_output=True, text=True)
     if result.returncode != 0:
         print(f"x86_64 compile failed: {result.stderr}")
@@ -672,22 +633,76 @@ app.run()
     os.remove('WayfindLauncher-x86_64')
 
     # Copy to app bundle
-    app_binary = os.path.join(PROJECT_DIR, 'Northwoods Wayfind.app', 'Contents', 'MacOS', 'WayfindLauncher')
-    print(f"  Copying to app bundle...")
+    app_contents = os.path.join(PROJECT_DIR, 'Northwoods Wayfind.app', 'Contents')
+    app_binary = os.path.join(app_contents, 'MacOS', 'WayfindLauncher')
+    print(f"  Copying binary to app bundle...")
     subprocess.run(['cp', 'WayfindLauncher', app_binary], check=True)
 
-    # Sign
-    print("  Signing app bundle...")
+    # Copy Sparkle.framework into app bundle
+    print("  Bundling Sparkle.framework...")
+    frameworks_dir = os.path.join(app_contents, 'Frameworks')
+    os.makedirs(frameworks_dir, exist_ok=True)
+    # Clear extended attributes (OneDrive adds these)
+    subprocess.run(['xattr', '-cr', SPARKLE_FRAMEWORK], check=True)
+    # Remove old copy if present
+    sparkle_dest = os.path.join(frameworks_dir, 'Sparkle.framework')
+    if os.path.exists(sparkle_dest):
+        subprocess.run(['rm', '-rf', sparkle_dest], check=True)
+    subprocess.run(['cp', '-R', SPARKLE_FRAMEWORK, sparkle_dest], check=True)
+
+    # Add rpath so binary can find Sparkle.framework
+    print("  Adding rpath...")
+    subprocess.run([
+        'install_name_tool', '-add_rpath',
+        '@executable_path/../Frameworks', app_binary
+    ], capture_output=True)  # May fail if rpath already exists, that's OK
+
+    # Update Info.plist with Sparkle keys and new version
+    print("  Updating Info.plist...")
+    info_plist = os.path.join(app_contents, 'Info.plist')
+    subprocess.run(['/usr/libexec/PlistBuddy', '-c', 'Set :CFBundleShortVersionString 1.0.1', info_plist], check=True)
+    subprocess.run(['/usr/libexec/PlistBuddy', '-c', 'Set :CFBundleVersion 2', info_plist], check=True)
+    subprocess.run(['/usr/libexec/PlistBuddy', '-c', 'Set :LSMinimumSystemVersion 11.0', info_plist], check=True)
+    # Add Sparkle keys
+    for key, val in [
+        ('SUPublicEDKey', 'VIMxKZmmRokdMcHK5d3QU4+qHgBglmkVFP5aAVvxgqM='),
+        ('SUFeedURL', 'https://northwoodscommunitychurch.github.io/app-updates/appcast-wayfind.xml'),
+        ('SUEnableAutomaticChecks', 'true'),
+    ]:
+        # Try Add first, fall back to Set if key exists
+        result = subprocess.run(
+            ['/usr/libexec/PlistBuddy', '-c', f'Add :{key} string {val}', info_plist],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            subprocess.run(['/usr/libexec/PlistBuddy', '-c', f'Set :{key} {val}', info_plist], check=True)
+
+    # Sign Sparkle components inside-out
+    print("  Signing Sparkle components...")
     app_path = os.path.join(PROJECT_DIR, 'Northwoods Wayfind.app')
+    sparkle_b = os.path.join(sparkle_dest, 'Versions', 'B')
+    sign_targets = [
+        os.path.join(sparkle_b, 'XPCServices', 'Installer.xpc'),
+        os.path.join(sparkle_b, 'XPCServices', 'Downloader.xpc'),
+        os.path.join(sparkle_b, 'Updater.app'),
+        os.path.join(sparkle_b, 'Autoupdate'),
+        sparkle_dest,
+    ]
+    for target in sign_targets:
+        if os.path.exists(target):
+            subprocess.run(['codesign', '--force', '--sign', '-', target], check=True)
+
+    # Sign the whole app
+    print("  Signing app bundle...")
     subprocess.run(['codesign', '--force', '--deep', '--sign', '-', app_path], check=True)
 
     # Create zip
     print("  Creating zip...")
     os.chdir(PROJECT_DIR)
-    zip_name = 'Northwoods-Wayfind-Launcher-v1.0.0.zip'
+    zip_name = 'Northwoods-Wayfind-v1.0.1.zip'
     if os.path.exists(zip_name):
         os.remove(zip_name)
-    subprocess.run(['zip', '-r', zip_name, 'Northwoods Wayfind.app'], check=True)
+    subprocess.run(['zip', '-r', '-y', zip_name, 'Northwoods Wayfind.app'], check=True)
 
     print(f"\\n✓ Build complete: {zip_name}")
     print(f"  Size: {os.path.getsize(zip_name):,} bytes")
